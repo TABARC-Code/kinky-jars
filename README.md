@@ -1,18 +1,23 @@
-# Kink Jars
+# Kinky Jars
 
-A single-page questionnaire: pick a color, rate each jar 1–5, save a PNG.
-Everything runs in the browser. Nothing is uploaded, and answers are only kept in that person's browser (localStorage) so a refresh doesn't wipe them.
+A single-page questionnaire: choose a colour, rate the jars from 1–5 and save the result as a PNG. It runs in the browser, with no build step or JavaScript packages to install.
 
-## Host it free on GitHub Pages
+Names and answers are saved in this browser's local storage. The app doesn't upload them; sharing an exported image is a separate, deliberate action. Google Fonts supplies the typefaces, so opening the page does make external font requests.
 
-1. Create a new repo (public is required for free Pages) and add `index.html`.
-2. Repo **Settings → Pages → Build and deployment → Source: Deploy from a branch**, pick `main` / `(root)`, Save.
-3. After a minute it's live at `https://<your-username>.github.io/<repo-name>/`.
+## Running it
 
-Netlify Drop or Cloudflare Pages work too: drag the folder in, done.
+Serve `index.html` with any static web server. For GitHub Pages, open the repository's Settings > Pages and select deployment from `main`, at the repository root.
 
-## Customizing
+Use **Save my jars** to prepare the image, then choose **Download PNG** or **Share image** where file sharing is supported. The preview also lets you save the image directly. **Clear saved answers** removes the stored name and answers; it keeps your current colour for the open session.
 
-- **Jar labels:** edit the `JARS` array at the top of the `<script>`. Each entry is a list of label lines. The grid is 7 columns wide and grows rows as needed.
-- **Preset colors:** edit `PRESETS`.
-- **Overflow looks:** six styles (drips, puddle, foam with popped lid, geyser, splash, hearts), assigned so neighbors never match. Details are seeded per jar, so every friend's sheet is consistent.
+## Changing the questions
+
+Edit `QUESTIONS` near the start of the script. Each question has an `id` and a `label` array, with one entry per printed line. Move the whole object when reordering questions, keep existing IDs unchanged and give new questions unique IDs. Don't edit `LEGACY_IDS`: that list records the original order for migrating older answers.
+
+The poster uses seven columns and adds rows as needed. Preset colours live in `PRESETS`; overflow artwork is seeded by position, so the same layout draws consistently.
+
+## Checks and development notes
+
+Run `node --test tests/regression.cjs` with Node.js 22 or newer. The tests exercise the actual page script using a small DOM and canvas substitute, so there's no test dependency to install.
+
+These checks cover application logic, not browser rendering or native phone sharing. See [NOTES.md](NOTES.md) for the changes, trade-offs and remaining device checks.
