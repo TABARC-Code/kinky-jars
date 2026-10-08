@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kink Jars</title>
-<meta name="description" content="Fill your jars, pick your color, save your picture.">
+<meta name="description" content="Fill your jars, pick your colour, save your picture.">
 <meta property="og:title" content="Kink Jars">
-<meta property="og:description" content="Fill your jars, pick your color, save your picture.">
+<meta property="og:description" content="Fill your jars, pick your colour, save your picture.">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,6 +14,7 @@
 <style>
   :root{--c:#e63946;--on-c:#fff;--ink:#1d1a17;--bg:#fbf6ef;--card:#fff;--muted:#6b625a;--line:#e9e0d5}
   *{box-sizing:border-box}
+  [hidden]{display:none!important}
   html{-webkit-text-size-adjust:100%}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;font-size:18px;line-height:1.45;padding-bottom:110px}
   @media(min-width:960px){body{padding-bottom:40px}}
@@ -31,9 +32,9 @@
   input[type=text]{font:inherit;font-size:20px;width:100%;padding:14px 16px;border:2px solid var(--line);border-radius:14px;background:#fff;color:var(--ink)}
   input[type=text]:focus{border-color:var(--ink);outline:none}
   button{font:inherit;cursor:pointer;color:var(--ink)}
-  button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+  a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 
-  /* color picker */
+  /* colour picker */
   .picker{display:grid;gap:18px}
   @media(min-width:620px){.picker{grid-template-columns:1fr 170px;align-items:center}}
   .swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;max-width:420px}
@@ -77,8 +78,9 @@
   .bar .big{width:auto;margin:0;padding:12px 22px;font-size:21px;box-shadow:0 4px 0 var(--ink)}
   @media(min-width:960px){.bar{display:none}}
 
-  #modal{position:fixed;inset:0;background:rgba(20,16,12,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
-  #modal[hidden]{display:none}
+  #modal{border:0;padding:0;background:transparent;max-width:calc(100% - 32px);max-height:92vh}
+  #modal::backdrop{background:rgba(20,16,12,.6)}
+  button:disabled{cursor:wait;opacity:.7}
   .sheet{background:#fff;border-radius:22px;padding:20px;max-width:440px;width:100%;max-height:92vh;overflow:auto;text-align:center}
   .sheet h3{font-family:Oswald,sans-serif;font-size:28px;margin:0 0 6px}
   .sheet p{margin:0 0 12px;color:var(--muted);font-size:16px}
@@ -90,31 +92,31 @@
 <div class="wrap">
   <header>
     <h1>Fill your <span>jars</span></h1>
-    <p>Pick a color, rate each one from 1 (a little) to 5 (overflowing), then save your picture. Not your thing? Skip it and the jar stays empty.</p>
+    <p>Pick a colour, rate each one from 1 (a little) to 5 (overflowing), then save your picture. Not your thing? Skip it and the jar stays empty.</p>
   </header>
 
   <div class="layout">
     <main>
       <section class="panel">
         <div class="step">Step 1</div>
-        <h2>What's your name?</h2>
+        <h2><label for="name">What's your name?</label></h2>
         <p class="hint">It goes on the blank line at the top. Nickname is fine, or leave it blank.</p>
         <input type="text" id="name" maxlength="24" autocomplete="off" placeholder="Your name">
       </section>
 
       <section class="panel">
         <div class="step">Step 2</div>
-        <h2>Pick your color</h2>
+        <h2>Pick your colour</h2>
         <div class="picker">
           <div>
-            <div class="swatches" id="swatches" aria-label="Color choices"></div>
+            <div class="swatches" id="swatches" aria-label="Colour choices"></div>
             <div class="sliders">
               <label class="sl">Red<input type="range" id="r" min="0" max="255"><output id="rv"></output></label>
               <label class="sl">Green<input type="range" id="g" min="0" max="255"><output id="gv"></output></label>
               <label class="sl">Blue<input type="range" id="b" min="0" max="255"><output id="bv"></output></label>
             </div>
             <div class="hexrow">
-              <input type="text" id="hex" maxlength="7" spellcheck="false" aria-label="Color code">
+              <input type="text" id="hex" maxlength="7" spellcheck="false" aria-label="Colour code">
               <button class="ghost" id="surprise" type="button">Surprise me</button>
             </div>
           </div>
@@ -138,9 +140,9 @@
         <h2>Your jars</h2>
         <canvas class="poster" id="poster" aria-label="Preview of your filled jars"></canvas>
         <button class="big" id="save" type="button">Save my jars</button>
-        <div class="small-links">
-          <span>Nothing leaves your phone.</span>
-          <button class="linkbtn" id="reset" type="button">Start over</button>
+        <p id="status" role="status" aria-live="polite"></p><p class="privacy">Your name and answers are saved on this device. Google Fonts is contacted for typefaces; it receives no questionnaire answers from this app.</p><div class="small-links">
+          <span>Answers stay in this browser until you clear them or share an image.</span>
+          <button class="linkbtn" id="reset" type="button">Clear saved answers</button>
         </div>
       </section>
     </aside>
@@ -149,45 +151,268 @@
 
 <div class="bar"><div class="bar-in"><span id="progress">0 of 28 filled</span><button class="big" id="saveBar" type="button">Save my jars</button></div></div>
 
-<div id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="mt">
+<dialog id="modal" aria-labelledby="mt">
   <div class="sheet">
     <h3 id="mt">Here are your jars!</h3>
-    <p>If it didn't download, press and hold the picture (or right-click it) and choose “Save image.”</p>
+    <p id="exportStatus" role="status"></p>
+    <a class="big" id="downloadImage">Download PNG</a>
+    <button class="big" id="shareImage" type="button" hidden>Share image</button>
     <img id="modalImg" alt="Your filled jars">
     <button class="big" id="closeModal" type="button">Done</button>
   </div>
-</div>
+</dialog>
 
 <script>
-/* ===== Edit the jars here. Each array is the label, one entry per line. ===== */
-const JARS = [
-  ["being","a dom"],["being","a sub"],["being","a switch"],["choking"],["being","choked"],["spanking"],["being","spanked"],
-  ["ddlg / mdlb"],["age","play"],["doing stuff","in public"],["wax","play"],["water","sports"],["role","play"],["consensual","non consent"],
-  ["having","orgasms","controlled"],["controlling","orgasms"],["gags"],["feet"],["anal"],["being","tied up"],["tying","people up"],
-  ["humiliating","or","degrading"],["being","humiliated","or","degraded"],["bdsm"],["threesomes"],["sadism"],["masochism"],["spit"]
+/* Keep each ID with its label when moving questions. IDs are saved; wording can change. */
+const QUESTIONS = [
+  {
+    "id": "dom",
+    "label": [
+      "being",
+      "a dom"
+    ]
+  },
+  {
+    "id": "sub",
+    "label": [
+      "being",
+      "a sub"
+    ]
+  },
+  {
+    "id": "switch",
+    "label": [
+      "being",
+      "a switch"
+    ]
+  },
+  {
+    "id": "choking",
+    "label": [
+      "choking"
+    ]
+  },
+  {
+    "id": "choked",
+    "label": [
+      "being",
+      "choked"
+    ]
+  },
+  {
+    "id": "spanking",
+    "label": [
+      "spanking"
+    ]
+  },
+  {
+    "id": "spanked",
+    "label": [
+      "being",
+      "spanked"
+    ]
+  },
+  {
+    "id": "ddlg-mdlb",
+    "label": [
+      "ddlg / mdlb"
+    ]
+  },
+  {
+    "id": "age-play",
+    "label": [
+      "age",
+      "play"
+    ]
+  },
+  {
+    "id": "public",
+    "label": [
+      "doing stuff",
+      "in public"
+    ]
+  },
+  {
+    "id": "wax",
+    "label": [
+      "wax",
+      "play"
+    ]
+  },
+  {
+    "id": "water-sports",
+    "label": [
+      "water",
+      "sports"
+    ]
+  },
+  {
+    "id": "role-play",
+    "label": [
+      "role",
+      "play"
+    ]
+  },
+  {
+    "id": "cnc",
+    "label": [
+      "consensual",
+      "non consent"
+    ]
+  },
+  {
+    "id": "orgasms-controlled",
+    "label": [
+      "having",
+      "orgasms",
+      "controlled"
+    ]
+  },
+  {
+    "id": "controlling-orgasms",
+    "label": [
+      "controlling",
+      "orgasms"
+    ]
+  },
+  {
+    "id": "gags",
+    "label": [
+      "gags"
+    ]
+  },
+  {
+    "id": "feet",
+    "label": [
+      "feet"
+    ]
+  },
+  {
+    "id": "anal",
+    "label": [
+      "anal"
+    ]
+  },
+  {
+    "id": "tied-up",
+    "label": [
+      "being",
+      "tied up"
+    ]
+  },
+  {
+    "id": "tying",
+    "label": [
+      "tying",
+      "people up"
+    ]
+  },
+  {
+    "id": "degrading",
+    "label": [
+      "humiliating",
+      "or",
+      "degrading"
+    ]
+  },
+  {
+    "id": "degraded",
+    "label": [
+      "being",
+      "humiliated",
+      "or",
+      "degraded"
+    ]
+  },
+  {
+    "id": "bdsm",
+    "label": [
+      "bdsm"
+    ]
+  },
+  {
+    "id": "threesomes",
+    "label": [
+      "threesomes"
+    ]
+  },
+  {
+    "id": "sadism",
+    "label": [
+      "sadism"
+    ]
+  },
+  {
+    "id": "masochism",
+    "label": [
+      "masochism"
+    ]
+  },
+  {
+    "id": "spit",
+    "label": [
+      "spit"
+    ]
+  }
 ];
+const JARS = QUESTIONS.map(question => question.label);
 const PRESETS = ["#e63946","#ff5d8f","#ff8c42","#ffd23f","#7bd389","#2ec4b6","#3a86ff","#5b2a86","#c77dff","#8d1d3a","#8d5524","#2b2d42"];
 const COLS = 7, INK = "#151311", PW = 1200;
 const ROWS = Math.ceil(JARS.length / COLS);
 const PH = 260 + (ROWS - 1) * 345 + 360;
 const STORE = "kinkjars-v1";
 
-/* ===== state ===== */
-let state = { name: "", color: "#e63946", answers: JARS.map(() => 0) };
+/* I keep IDs separate from the wording. Editing a label shouldn't rewrite someone's answers. */
+// This order is frozen. It's the only honest way to migrate the old positional answers.
+const LEGACY_IDS = ['dom', 'sub', 'switch', 'choking', 'choked', 'spanking', 'spanked', 'ddlg-mdlb', 'age-play', 'public', 'wax', 'water-sports', 'role-play', 'cnc', 'orgasms-controlled', 'controlling-orgasms', 'gags', 'feet', 'anal', 'tied-up', 'tying', 'degrading', 'degraded', 'bdsm', 'threesomes', 'sadism', 'masochism', 'spit'];
+const STORE_V2 = "kinkyjars-v2";
+function cleanState(saved) {
+  const source = saved && typeof saved === "object" ? saved : {};
+  const old = Array.isArray(source.answers);
+  const answers = {};
+  for (const { id } of QUESTIONS) {
+    const value = old ? source.answers[LEGACY_IDS.indexOf(id)] : source.answers?.[id];
+    answers[id] = Number.isInteger(value) && value >= 0 && value <= 5 ? value : 0;
+  }
+  return {
+    name: typeof source.name === "string" ? source.name.slice(0, 24) : "",
+    color: typeof source.color === "string" && /^#[0-9a-f]{6}$/i.test(source.color) ? source.color.toLowerCase() : "#e63946",
+    answers
+  };
+}
+let state = cleanState(null);
+let storageWarning = "";
 try {
-  const s = JSON.parse(localStorage.getItem(STORE) || "null");
-  if (s && Array.isArray(s.answers)) state = { ...state, ...s, answers: JARS.map((_, i) => s.answers[i] || 0) };
-} catch (e) {}
-const persist = () => { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} };
+  const raw = localStorage.getItem(STORE_V2);
+  state = cleanState(JSON.parse(raw ?? localStorage.getItem(STORE) ?? "null"));
+} catch (e) {
+  storageWarning = "Saved answers couldn't be read. You can still fill in and save an image.";
+}
+function persist() {
+  try {
+    localStorage.setItem(STORE_V2, JSON.stringify(state));
+    localStorage.removeItem(STORE);
+  } catch (e) {
+    $("status").textContent = "This browser couldn't save your answers. Export an image before leaving.";
+  }
+}
 
-/* ===== color helpers ===== */
+/* ===== colour helpers ===== */
 const hexToRgb = h => { h = h.replace("#", ""); if (h.length === 3) h = [...h].map(x => x + x).join(""); const n = parseInt(h, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
 const rgbToHex = a => "#" + a.map(v => Math.round(v).toString(16).padStart(2, "0")).join("");
 const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
 const css = (a, al = 1) => `rgba(${a.map(Math.round).join(",")},${al})`;
 const lighten = (a, t) => css(mix(a, [255, 255, 255], t));
 const darken = (a, t) => css(mix(a, [0, 0, 0], t));
-const lum = ([r, g, b]) => (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+function luminance(rgb) {
+  const linear = rgb.map(v => { v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; });
+  return linear[0] * .2126 + linear[1] * .7152 + linear[2] * .0722;
+}
+function textColour(rgb) {
+  const light = luminance(rgb), dark = 0;
+  const darkContrast = (Math.max(light, dark) + .05) / (Math.min(light, dark) + .05);
+  return darkContrast >= 1.05 / (light + .05) ? "#000" : "#fff";
+}
 
 function rng(seed) { return () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
@@ -376,7 +601,7 @@ function drawPoster(canvas, scale) {
   JARS.forEach((label, i) => {
     const col = i % COLS, row = Math.floor(i / COLS);
     const cx = PW / 2 + (col - (COLS - 1) / 2) * 150, top = 260 + row * 345;
-    c.save(); c.translate(cx - 48, top); drawJar(c, i, state.answers[i], rgb); c.restore();
+    c.save(); c.translate(cx - 48, top); drawJar(c, i, state.answers[QUESTIONS[i].id], rgb); c.restore();
     let size = 30; c.font = `600 ${size}px Oswald, 'Arial Narrow', sans-serif`;
     while (label.some(l => c.measureText(l).width > 140) && size > 18) { size--; c.font = `600 ${size}px Oswald, 'Arial Narrow', sans-serif`; }
     c.fillStyle = INK; c.textAlign = "center";
@@ -403,7 +628,7 @@ JARS.forEach((label, i) => {
   for (let v = 1; v <= 5; v++) {
     const b = document.createElement("button"); b.type = "button"; b.textContent = v;
     b.setAttribute("aria-label", `${text}: ${v} out of 5`);
-    b.onclick = () => { state.answers[i] = state.answers[i] === v ? 0 : v; persist(); update(); };
+    b.onclick = () => { state.answers[QUESTIONS[i].id] = state.answers[QUESTIONS[i].id] === v ? 0 : v; persist(); update(); };
     sc.appendChild(b);
   }
   minis.push({ canvas: q.querySelector("canvas"), buttons: [...sc.children] });
@@ -413,7 +638,7 @@ JARS.forEach((label, i) => {
 const sw = $("swatches");
 PRESETS.forEach(hex => {
   const b = document.createElement("button"); b.type = "button"; b.className = "sw"; b.style.background = hex;
-  b.dataset.hex = hex; b.setAttribute("aria-label", "Color " + hex);
+  b.dataset.hex = hex; b.setAttribute("aria-label", "Colour " + hex);
   b.onclick = () => setColor(hex); sw.appendChild(b);
 });
 ["r", "g", "b"].forEach((k, n) => $(k).addEventListener("input", () => {
@@ -435,10 +660,12 @@ $("name").addEventListener("input", e => { state.name = e.target.value; persist(
 function setColor(hex, fromHexBox) { state.color = hex.toLowerCase(); persist(); if (!fromHexBox) $("hex").value = state.color.toUpperCase(); update(); }
 
 let queued = false;
+let lastColour = null;
+const lastAnswers = new Map();
 function update() { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; render(); }); }
 function render() {
   const rgb = hexToRgb(state.color), root = document.documentElement.style;
-  root.setProperty("--c", state.color); root.setProperty("--on-c", lum(rgb) > 0.6 ? INK : "#fff");
+  root.setProperty("--c", state.color); root.setProperty("--on-c", textColour(rgb));
   ["r", "g", "b"].forEach((k, n) => {
     $(k).value = rgb[n]; $(k + "v").textContent = rgb[n];
     const lo = [...rgb], hi = [...rgb]; lo[n] = 0; hi[n] = 255;
@@ -446,44 +673,110 @@ function render() {
   });
   if (document.activeElement !== $("hex")) $("hex").value = state.color.toUpperCase();
   [...sw.children].forEach(b => b.setAttribute("aria-pressed", b.dataset.hex === state.color));
+  if (lastColour !== state.color) {
   drawMini($("pv1"), 3, 2, rgb); drawMini($("pv2"), 9, 4, rgb); drawMini($("pv3"), 2, 5, rgb);
+  }
   minis.forEach((m, i) => {
-    drawMini(m.canvas, i, state.answers[i], rgb);
-    m.buttons.forEach((b, k) => b.setAttribute("aria-pressed", state.answers[i] === k + 1));
+    const answer = state.answers[QUESTIONS[i].id];
+    if (lastColour !== state.color || lastAnswers.get(i) !== answer) drawMini(m.canvas, i, answer, rgb);
+    lastAnswers.set(i, answer);
+    m.buttons.forEach((b, k) => b.setAttribute("aria-pressed", state.answers[QUESTIONS[i].id] === k + 1));
   });
-  const n = state.answers.filter(Boolean).length;
+  lastColour = state.color;
+  const n = Object.values(state.answers).filter(Boolean).length;
   $("progress").textContent = `${n} of ${JARS.length} filled`;
   drawPoster($("poster"), 1);
 }
 
-async function save() {
-  const out = document.createElement("canvas");
-  drawPoster(out, 2);
-  const blob = await new Promise(res => out.toBlob(res, "image/png"));
-  const slug = state.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  const fname = (slug ? slug + "-" : "") + "kink-jars.png";
-  const file = new File([blob], fname, { type: "image/png" });
-  const touch = matchMedia("(pointer: coarse)").matches;
-  if (touch && navigator.canShare && navigator.canShare({ files: [file] })) {
-    try { await navigator.share({ files: [file] }); return; }
-    catch (e) { if (e.name === "AbortError") return; }
+let saving = false;
+let previewUrl = null;
+let saveTrigger = null;
+function releasePreview() {
+  $("modalImg").removeAttribute("src");
+  if (previewUrl) URL.revokeObjectURL(previewUrl);
+  previewUrl = null;
+}
+// Prepare the file first, then offer Share on a fresh tap. Mobile browsers can
+// drop the original gesture while a large PNG is being encoded. Charming.
+async function save(event) {
+  if (saving) return;
+  saving = true;
+  saveTrigger = event?.currentTarget || document.activeElement;
+  $("save").disabled = $("saveBar").disabled = true;
+  $("status").textContent = "Preparing your image…";
+  try {
+    await fontsReady;
+    const out = document.createElement("canvas");
+    drawPoster(out, 2);
+    const blob = await new Promise(resolve => out.toBlob(resolve, "image/png"));
+    if (!blob) throw new Error("PNG encoding returned no image");
+    const slug = state.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const fname = (slug ? slug + "-" : "") + "kink-jars.png";
+    releasePreview();
+    previewUrl = URL.createObjectURL(blob);
+    $("modalImg").src = previewUrl;
+    $("downloadImage").href = previewUrl;
+    $("downloadImage").download = fname;
+    $("shareImage").hidden = true;
+    if (typeof File === "function" && navigator.canShare && navigator.share) {
+      const file = new File([blob], fname, { type: "image/png" });
+      try {
+        if (navigator.canShare({ files: [file] })) {
+          $("shareImage").hidden = false;
+          $("shareImage").onclick = async () => {
+            $("shareImage").disabled = true;
+            try { await navigator.share({ files: [file] }); }
+            catch (error) {
+              if (error.name !== "AbortError") $("exportStatus").textContent = "Sharing didn't work. Use Download PNG or save the picture below.";
+            } finally { $("shareImage").disabled = false; }
+          };
+        }
+      } catch (error) { /* Download still works if file sharing isn't supported. */ }
+    }
+    $("exportStatus").textContent = "Download the PNG, or press and hold the picture to save it.";
+    $("modal").showModal();
+    $("downloadImage").focus();
+    $("status").textContent = "Your image is ready.";
+  } catch (error) {
+    releasePreview();
+    $("status").textContent = "The image couldn't be prepared. Please try again; your answers are still here.";
+  } finally {
+    saving = false;
+    $("save").disabled = $("saveBar").disabled = false;
   }
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a"); a.href = url; a.download = fname;
-  document.body.appendChild(a); a.click(); a.remove();
-  $("modalImg").src = url; $("modal").hidden = false; $("closeModal").focus();
 }
 $("save").onclick = save; $("saveBar").onclick = save;
-$("closeModal").onclick = () => { $("modal").hidden = true; };
-$("modal").addEventListener("click", e => { if (e.target.id === "modal") $("modal").hidden = true; });
+$("closeModal").onclick = () => $("modal").close();
+$("modal").addEventListener("click", event => {
+  const bounds = $("modal").getBoundingClientRect();
+  if (event.target === $("modal") && (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)) $("modal").close();
+});
+$("modal").addEventListener("close", () => {
+  // Keep the current URL alive for an in-flight download; release it on the next
+  // export or page exit. One retained image is enough, however enthusiastic we get.
+  saveTrigger?.focus();
+});
+addEventListener("pagehide", releasePreview);
 $("reset").onclick = () => {
-  if (!confirm("Empty all the jars and start over?")) return;
-  state.answers = JARS.map(() => 0); state.name = ""; $("name").value = ""; persist(); update(); scrollTo({ top: 0, behavior: "smooth" });
+  if (!confirm("Clear your name and all saved answers from this browser?")) return;
+  state = cleanState({ color: state.color });
+  $("name").value = "";
+  try {
+    localStorage.removeItem(STORE);
+    localStorage.removeItem(STORE_V2);
+    $("status").textContent = "Your name and saved answers have been cleared.";
+  } catch (error) {
+    $("status").textContent = "The form is clear, but browser storage couldn't be cleared. Remove this site's data in browser settings.";
+  }
+  update();
+  scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
 };
 
+$("status").textContent = storageWarning;
 render();
-Promise.all(["700 104px Oswald, Impact, 'Arial Narrow', sans-serif", "600 30px Oswald", "500 30px Oswald, 'Arial Narrow', sans-serif", '66px "Permanent Marker"'].map(f => document.fonts.load(f)))
-  .catch(() => {}).then(() => document.fonts.ready).then(render);
+const fontsReady = Promise.all(["700 104px Oswald", "600 30px Oswald", "500 30px Oswald", '66px "Permanent Marker"'].map(font => document.fonts.load(font)))
+  .catch(() => {}).then(() => document.fonts.ready);
+fontsReady.then(update);
 </script>
 </body>
 </html>
