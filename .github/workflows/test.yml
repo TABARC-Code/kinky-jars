@@ -13,6 +13,11 @@ jobs:
           node-version: 22
       - name: Logic checks (no dependencies)
         run: node --test tests/regression.cjs
+      - name: WordPress plugin (shortcode and build)
+        run: |
+          command -v php >/dev/null || { sudo apt-get update && sudo apt-get install -y php-cli; }
+          php tests/plugin-test.php
+          bash tests/build-test.sh
       - name: Browser smoke checks
         run: |
           npm install --no-save playwright

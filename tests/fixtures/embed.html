@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Embed fixture</title>
+</head>
+<body style="margin:0;font-family:sans-serif">
+<!-- Mimics what the [kink_jars] shortcode prints inside a theme, so the smoke test can check the app in an iframe. -->
+<p style="height:300px;margin:0;padding:16px">Theme content above the app.</p>
+<div class="kink-jars-embed"><iframe id="app" src="../../index.html" title="Kink Jars questionnaire" style="display:block;width:100%;height:90vh;border:0" allow="clipboard-write; web-share"></iframe></div>
+<p style="height:600px;margin:0;padding:16px">Theme content below.</p>
+</body>
+</html>

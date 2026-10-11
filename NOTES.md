@@ -112,6 +112,19 @@ Aftercare isn't a kink, so it isn't a jar. It's one line in the compare panel in
 
 A taller poster broke the sticky column again: the new guard test caught it at 1010px in a 1000px window. Rather than raise the threshold every time a row gets added, the preview poster now scales to the window height (`max-height: calc(100vh - 400px)`), and the column sticks from 700px tall. The smoke test checks 650, 800 and 1000px. The exported PNG is unaffected, at 2400 by 4000.
 
+## 11 October 2026 — 1.5.0, WordPress plugin
+
+`wordpress/kink-jars/kink-jars.php` registers `[kink_jars]`, which prints an iframe pointing at the app bundled inside the plugin. I went for an iframe instead of rewriting the app into a mountable widget. The app owns the whole page (fixed bar, two modal dialogues, body styles), and an iframe keeps theme CSS and app CSS apart with no refactor and no second copy of the logic. It's same-origin, so storage, downloads and the clipboard work as they do standalone. The cost is a scrolling box, which is why `height` is adjustable and there's a full-screen link.
+
+- **One source.** The app isn't committed twice. `scripts/build-plugin.sh` copies `index.html` and `fonts/` into the zip and stamps the plugin header with `VERSION` from `index.html`, so there's one number to bump.
+- **Attributes.** `height` only accepts `NNNpx` or `NNvh`; anything else falls back to 90vh, so it can't leak into the CSS. `title` is escaped. `tests/plugin-test.php` throws hostile values at both, using small stand-ins for the WordPress functions.
+- **Build check.** `tests/build-test.sh` builds the zip and checks the files, the stamped version, that the bundled app matches `index.html` byte for byte, and that the built PHP parses and passes the shortcode tests. I proved it can fail: dropping the fonts copy makes it fail with "missing oswald.woff2".
+- **Iframe smoke test.** `tests/fixtures/embed.html` mimics a theme page. The test checks the age gate is fully visible inside the frame, that neither the frame nor the page scrolls sideways, and that saving makes a PNG. It found one honest quirk: the save bar is fixed to the bottom of the iframe, so it's only on screen once the iframe is scrolled into view.
+- **Releases.** `.github/workflows/release.yml` runs on pushes to `main`. If there's no release for the current `VERSION`, it builds the zip, runs both plugin checks and publishes `v<VERSION>` with the zip attached.
+- **Not on WordPress.org,** by choice: it's distributed from GitHub releases.
+
+Not checked: a real WordPress install. The shortcode is tested against stand-ins, not WordPress itself, so "install the zip on a test site" is on the owed list.
+
 ### Ideas, not built
 
-Nothing queued. Still owed: real Android and iPhone checks of download, share, cancel, reload and clear, and the compare clipboard on Safari, which is the one most likely to sulk.
+Nothing queued. Still owed: installing the plugin zip on a real WordPress site, plus real Android and iPhone checks of download, share, cancel, reload and clear, and the compare clipboard on Safari, which is the one most likely to sulk.
