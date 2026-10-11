@@ -33,8 +33,9 @@
   .easy-toggle input{width:22px;height:22px;accent-color:var(--ink)}
   .layout{display:grid;gap:24px;grid-template-columns:minmax(0,1fr)}
   @media(min-width:960px){.layout{grid-template-columns:minmax(0,1fr) 430px}.side{align-self:start}}
-  /* Only stick the poster when the whole panel fits; on shorter screens it scrolls like everything else. */
-  @media(min-width:960px) and (min-height:900px){.side{position:sticky;top:20px}}
+  /* Only stick the poster column on screens tall enough for it, and scale the preview to the window
+     so the column always fits, however many jars there are. Shorter screens scroll normally. */
+  @media(min-width:960px) and (min-height:700px){.side{position:sticky;top:20px}.side .poster{width:auto;max-width:100%;max-height:calc(100vh - 400px);margin:0 auto}}
   .panel{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:20px;margin-bottom:20px}
   .step{font-family:var(--head);font-weight:600;font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
   h2{font-family:var(--head);font-weight:600;font-size:27px;margin:2px 0 12px;line-height:1.15}
@@ -182,7 +183,7 @@
   <section class="panel cmp" id="compare">
     <div class="step">Optional</div>
     <h2>Compare with someone</h2>
-    <p class="hint">Swap codes with a partner. The page only lists the jars you're both into. A code does contain all your answers, though, so only give it to someone you trust.</p>
+    <p class="hint">Swap codes with a partner. The page only lists the jars you're both into. A code does contain all your answers, though, so only give it to someone you trust. Whatever matches, agree a safeword and talk about aftercare before you start.</p>
     <div class="cmp-row"><button class="ghost" id="copyCode" type="button">Copy my code</button></div>
     <input type="text" id="myCode" readonly hidden aria-label="Your code" spellcheck="false">
     <label for="theirCode" style="display:block;margin-top:12px;font-weight:700;font-size:16px">Their code</label>
@@ -192,7 +193,7 @@
   </section>
 </div>
 
-<div class="bar"><div class="bar-in"><span id="progress">0 of 28 filled</span><button class="big" id="saveBar" type="button">Save my jars</button></div></div>
+<div class="bar"><div class="bar-in"><span id="progress">0 of 35 filled</span><button class="big" id="saveBar" type="button">Save my jars</button></div></div>
 
 <dialog id="ageGate" aria-labelledby="agt">
   <div class="sheet">
@@ -216,12 +217,13 @@
 
 <script>
 /* Kinky Jars. Version history, newest first. Short notes so future me knows why it is the way it is.
+   1.4.0  Seven new jars (brat, taming brats, primal, pet play, praise, blindfolds, watching others): a fifth poster row.
    1.3.1  Review fixes: compare out of the sticky column, sticky only on tall screens, honest compare counts, font licences bundled.
    1.3.0  Compare codes (only mutual jars shown), four more flags, poster follows easy-read.
    1.2.0  Pride palettes: each jar takes the next colour of a flag. Hex values checked against Wikimedia and Wikipedia (see NOTES.md).
    1.1.0  "Not for me" flag, easy-read font, 18+ gate, fonts bundled, CI and browser smoke tests.
    1.0.0  First proper tidy: validated storage, answers keyed by ID, save and share reworked. */
-const VERSION = "1.3.1";
+const VERSION = "1.4.0";
 /* Keep each ID with its label when moving questions. IDs are saved; wording can change. */
 const QUESTIONS = [
   {
@@ -411,6 +413,53 @@ const QUESTIONS = [
     "id": "spit",
     "label": [
       "spit"
+    ]
+  },
+  {
+    "id": "brat",
+    "label": [
+      "being",
+      "a brat"
+    ]
+  },
+  {
+    "id": "brat-taming",
+    "label": [
+      "taming",
+      "brats"
+    ]
+  },
+  {
+    "id": "primal",
+    "label": [
+      "primal",
+      "play"
+    ]
+  },
+  {
+    "id": "pet-play",
+    "label": [
+      "pet",
+      "play"
+    ]
+  },
+  {
+    "id": "praise",
+    "label": [
+      "praise"
+    ]
+  },
+  {
+    "id": "blindfolds",
+    "label": [
+      "blindfolds"
+    ]
+  },
+  {
+    "id": "voyeur",
+    "label": [
+      "watching",
+      "others"
     ]
   }
 ];

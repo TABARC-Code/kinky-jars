@@ -150,7 +150,7 @@ test('poster footer reports how many jars are filled', () => {
   const texts = [];
   const app = boot({}, { texts });
   app.run('state.answers.dom = 3; state.answers.sub = 5; drawPoster(document.createElement("canvas"), 1);');
-  assert.ok(texts.includes('2 of 28 jars filled'), texts.join(' | '));
+  assert.ok(texts.includes('2 of 35 jars filled'), texts.join(' | '));
 });
 
 test('easy-read font preference applies, persists on its own key, and survives Clear', () => {
@@ -175,7 +175,7 @@ test('not-for-me is validated, exclusive with ratings, and shown on the poster',
   // dom has a rating, so its flag is dropped; unknown IDs and non-true values are ignored
   assert.deepEqual(JSON.parse(app.run('JSON.stringify(state.no)')), { sub: true });
   app.run('state.answers.dom = 0; state.no.dom = true; drawPoster(document.createElement("canvas"), 1);');
-  assert.ok(texts.includes('0 of 28 jars filled · 2 not for me'), texts.join(' | '));
+  assert.ok(texts.includes('0 of 35 jars filled · 2 not for me'), texts.join(' | '));
 });
 
 test('rating a jar clears not-for-me, and not-for-me clears the rating', () => {
@@ -332,4 +332,16 @@ test('with no name in their code, the list says "them" in lower case', () => {
   app.elements.get('compareBtn').onclick();
   const list = app.elements.get('compareResult').children.find(el => el.className === 'cmp-list');
   assert.equal(list.children[0].children[1].textContent, 'you 2, them 4');
+});
+
+test('question IDs are unique and the 1.4 jars load as empty from an older save', () => {
+  const app = boot({ 'kinkyjars-v2': JSON.stringify({ answers: { dom: 4, spit: 2 } }) });
+  const ids = JSON.parse(app.run('JSON.stringify(QUESTIONS.map(q => q.id))'));
+  assert.equal(new Set(ids).size, ids.length);
+  for (const id of ['brat', 'brat-taming', 'primal', 'pet-play', 'praise', 'blindfolds', 'voyeur']) {
+    assert.ok(ids.includes(id), id);
+    assert.equal(app.run(`state.answers[${JSON.stringify(id)}]`), 0, id);
+  }
+  assert.equal(app.run('state.answers.dom'), 4);
+  assert.equal(app.run('state.answers.spit'), 2);
 });
