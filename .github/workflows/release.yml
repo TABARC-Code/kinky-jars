@@ -1,0 +1,36 @@
+name: Release
+# On every push to main: if VERSION in index.html has no release yet, build the
+# WordPress plugin zip and publish it as release v<VERSION>. Re-runs are harmless.
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Read version
+        id: v
+        run: echo "version=$(grep -oE 'const VERSION = "[0-9.]+"' index.html | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')" >> "$GITHUB_OUTPUT"
+      - name: Check for an existing release
+        id: exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "v${{ steps.v.outputs.version }}" >/dev/null 2>&1; then echo "found=yes" >> "$GITHUB_OUTPUT"; else echo "found=no" >> "$GITHUB_OUTPUT"; fi
+      - name: Build and test the plugin zip
+        if: steps.exists.outputs.found == 'no'
+        run: |
+          command -v php >/dev/null || { sudo apt-get update && sudo apt-get install -y php-cli; }
+          php tests/plugin-test.php
+          bash tests/build-test.sh
+      - name: Publish the release
+        if: steps.exists.outputs.found == 'no'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v="${{ steps.v.outputs.version }}"
+          gh release create "v$v" "dist/kink-jars-$v.zip" --target "$GITHUB_SHA" --title "Kink Jars $v" \
+            --notes "Kink Jars $v. The WordPress plugin is attached as kink-jars-$v.zip: upload it under Plugins > Add New > Upload Plugin, then add [kink_jars] to a page. See NOTES.md for what changed."

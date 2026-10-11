@@ -122,3 +122,28 @@ for (const height of [650, 800, 1000]) {
     } finally { await browser.close(); }
   });
 }
+
+test('embedded in an iframe, as the WordPress shortcode does: gate visible, no overflow, saving works', opts, async () => {
+  const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
+  try {
+    const page = await browser.newPage({ viewport: { width: 390, height: 800 } });
+    const problems = [];
+    page.on('pageerror', e => problems.push(e.message));
+    await page.goto('file://' + path.join(__dirname, 'fixtures/embed.html'));
+    const frame = await (await page.waitForSelector('#app')).contentFrame();
+    await frame.waitForSelector('#ageGate[open]');
+    const gate = await frame.evaluate(() => { const r = document.querySelector('#ageGate .sheet').getBoundingClientRect(); return { top: r.top, bottom: r.bottom, h: innerHeight }; });
+    assert.ok(gate.top >= 0 && gate.bottom <= gate.h, `gate sits at ${gate.top}-${gate.bottom} in a ${gate.h}px frame`);
+    await frame.click('#ageYes');
+    assert.equal(await frame.evaluate(() => document.documentElement.scrollWidth), await frame.evaluate(() => innerWidth));
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 390);
+    await frame.click('.q >> nth=0 >> .scale button:nth-child(3)');
+    // The save bar is fixed to the bottom of the iframe, so it's only on screen once the iframe is
+    // scrolled into view, the same as a visitor scrolling down the page.
+    await page.locator('#app').scrollIntoViewIfNeeded();
+    await frame.click('#saveBar');
+    await frame.waitForSelector('#modal[open]');
+    assert.ok(await frame.evaluate(() => document.getElementById('modalImg').naturalWidth) > 1000);
+    assert.deepEqual(problems, []);
+  } finally { await browser.close(); }
+});

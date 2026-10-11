@@ -32,6 +32,14 @@ Be honest with yourself about what a code is, though. It's your name and answers
 
 A jar can be empty because you skipped it or because it's a firm no. Those used to look identical. **Not for me** puts a cross on the jar, and rating a jar or pressing the button again clears it. It's saved beside your answers, and older saves load fine without it.
 
+## WordPress plugin
+
+There's a WordPress plugin in `wordpress/kink-jars/`. Every release on the [Releases page](https://github.com/TABARC-Code/kinky-jars/releases) has the zip attached: upload it under **Plugins > Add New > Upload Plugin**, activate it, and put `[kink_jars]` on a page. It shows this same app in an iframe, at the same version, and stores nothing on the site. Details are in [wordpress/kink-jars/README.md](wordpress/kink-jars/README.md).
+
+It's deliberately not on the WordPress.org directory. It lives here.
+
+To build the zip yourself, run `bash scripts/build-plugin.sh`; it writes `dist/kink-jars-<version>.zip`. Merging to `main` with a new `VERSION` publishes a release with the zip automatically.
+
 ## Changing the questions
 
 Edit `QUESTIONS` near the start of the script. Each question has an `id` and a `label` array, with one entry per printed line. Move the whole object when reordering questions, keep existing IDs unchanged and give new questions unique IDs. Don't edit `LEGACY_IDS`: that list records the original order for migrating older answers.
@@ -40,9 +48,11 @@ There are 35 questions. The poster uses seven columns and adds rows as needed, a
 
 ## Checks and development notes
 
-Two suites, both with Node.js 22 or newer:
+Three sets of checks. The first two need Node.js 22 or newer:
 
 - `node --test tests/regression.cjs` runs the actual page script against a small DOM and canvas substitute. No dependencies.
 - `node --test tests/smoke.cjs` drives real Chromium through Playwright: no sideways scroll at 320, 360, 390 and 1280px (standard and easy-read), no page errors, no requests to other sites, fonts load, the age gate holds, saving makes a PNG, pride palettes stick, compare works, and the desktop side column only sticks when it fits. It skips itself if Playwright isn't installed. Set `CHROMIUM_PATH` to use an existing Chromium. GitHub Actions runs both on every pull request and on pushes to `main` (`.github/workflows/test.yml`).
 
-Neither proves a PNG looks right or that a phone's share sheet behaves. See [NOTES.md](NOTES.md) for the changes, trade-offs and remaining device checks.
+- `php tests/plugin-test.php` and `bash tests/build-test.sh` check the plugin: shortcode output, escaping, the height rules, and that the built zip holds the right files at the right version.
+
+None of these proves a PNG looks right or that a phone's share sheet behaves. See [NOTES.md](NOTES.md) for the changes, trade-offs and remaining device checks.
