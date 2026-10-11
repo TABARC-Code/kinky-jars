@@ -8,13 +8,14 @@ function boot(saved = {}, options = {}) {
   const elements = new Map(), urls = [], revoked = [], frames = [];
   let draws = 0;
   const context = new Proxy({}, { get: (_, key) => {
+    if (key === 'fillText' && options.texts) return text => options.texts.push(text);
     if (key === 'measureText') return text => ({ width: String(text).length * 15 });
     if (key === 'createLinearGradient') return () => ({ addColorStop() {} });
     return () => {};
   }, set: () => true });
   function element() {
-    return {
-      children: [], dataset: {}, style: { setProperty() {} }, hidden: false, disabled: false,
+    const el = {
+      children: [], classes: new Set(), classList: { toggle(name, on) { on ? this.owner.classes.add(name) : this.owner.classes.delete(name); } }, dataset: {}, style: { setProperty() {} }, hidden: false, disabled: false,
       value: '', textContent: '', listeners: {}, attrs: {}, nodes: {},
       setAttribute(k, v) { this.attrs[k] = String(v); }, removeAttribute(k) { delete this[k]; },
       appendChild(child) { this.children.push(child); },
@@ -27,6 +28,8 @@ function boot(saved = {}, options = {}) {
       close() { this.open = false; this.listeners.close?.(); },
       getBoundingClientRect() { return { left: 0, right: 500, top: 0, bottom: 500 }; }
     };
+    el.classList.owner = el;
+    return el;
   }
   const document = {
     getElementById: id => { if (!elements.has(id)) elements.set(id, element()); return elements.get(id); },
@@ -46,7 +49,7 @@ function boot(saved = {}, options = {}) {
     URL: { createObjectURL: () => { const url = 'blob:' + urls.length; urls.push(url); return url; }, revokeObjectURL: url => revoked.push(url) }
   };
   vm.createContext(sandbox); vm.runInContext(source, sandbox);
-  return { run: code => vm.runInContext(code, sandbox), elements, data, urls, revoked, frames, draws: () => draws };
+  return { document, run: code => vm.runInContext(code, sandbox), elements, data, urls, revoked, frames, draws: () => draws };
 }
 
 test('invalid saved fields fall back safely and ratings stay within range', () => {
@@ -141,4 +144,78 @@ test('export does not encode until fonts are ready', async () => {
   resolveFonts();
   await saving;
   assert.equal(app.urls.length, 1);
+});
+
+test('poster footer reports how many jars are filled', () => {
+  const texts = [];
+  const app = boot({}, { texts });
+  app.run('state.answers.dom = 3; state.answers.sub = 5; drawPoster(document.createElement("canvas"), 1);');
+  assert.ok(texts.includes('2 of 28 jars filled'), texts.join(' | '));
+});
+
+test('easy-read font preference applies, persists on its own key, and survives Clear', () => {
+  const app = boot({ 'kinkjars-prefs': JSON.stringify({ easy: true }) });
+  assert.ok(app.document.documentElement.classes.has('easy'));
+  app.elements.get('easy').listeners.change({ target: { checked: false } });
+  assert.ok(!app.document.documentElement.classes.has('easy'));
+  assert.equal(JSON.parse(app.data.get('kinkjars-prefs')).easy, false);
+  app.elements.get('easy').listeners.change({ target: { checked: true } });
+  app.elements.get('reset').onclick();
+  assert.equal(JSON.parse(app.data.get('kinkjars-prefs')).easy, true);
+});
+
+test('a corrupt preference falls back to the standard font', () => {
+  const app = boot({ 'kinkjars-prefs': '{nope' });
+  assert.ok(!app.document.documentElement.classes.has('easy'));
+});
+
+test('not-for-me is validated, exclusive with ratings, and shown on the poster', () => {
+  const texts = [];
+  const app = boot({ 'kinkyjars-v2': JSON.stringify({ answers: { dom: 3, sub: 0 }, no: { dom: true, sub: true, bogus: true, switch: 'yes' } }) }, { texts });
+  // dom has a rating, so its flag is dropped; unknown IDs and non-true values are ignored
+  assert.deepEqual(JSON.parse(app.run('JSON.stringify(state.no)')), { sub: true });
+  app.run('state.answers.dom = 0; state.no.dom = true; drawPoster(document.createElement("canvas"), 1);');
+  assert.ok(texts.includes('0 of 28 jars filled · 2 not for me'), texts.join(' | '));
+});
+
+test('rating a jar clears not-for-me, and not-for-me clears the rating', () => {
+  const app = boot();
+  const q = app.elements.get('questions').children[0];
+  q.nodes['.nope'].onclick();
+  assert.equal(app.run('state.no.dom'), true);
+  q.nodes['.scale'].children[2].onclick();
+  assert.equal(app.run('state.no.dom'), undefined);
+  assert.equal(app.run('state.answers.dom'), 3);
+  q.nodes['.nope'].onclick();
+  assert.equal(app.run('state.answers.dom'), 0);
+  assert.equal(app.run('state.no.dom'), true);
+  q.nodes['.nope'].onclick();
+  assert.equal(app.run('state.no.dom'), undefined);
+});
+
+test('clear removes not-for-me flags too', () => {
+  const app = boot({ 'kinkyjars-v2': JSON.stringify({ no: { dom: true } }) });
+  assert.equal(app.run('state.no.dom'), true);
+  app.elements.get('reset').onclick();
+  assert.deepEqual(JSON.parse(app.run('JSON.stringify(state.no)')), {});
+});
+
+test('age gate opens until confirmed, cannot be escaped, and remembers a yes', () => {
+  const app = boot();
+  const gate = app.elements.get('ageGate');
+  assert.equal(gate.open, true);
+  let prevented = false;
+  gate.listeners.cancel({ preventDefault() { prevented = true; } });
+  assert.equal(prevented, true);
+  app.elements.get('ageYes').onclick();
+  assert.equal(gate.open, false);
+  assert.equal(app.data.get('kinkjars-18'), 'yes');
+  assert.notEqual(boot({ 'kinkjars-18': 'yes' }).elements.get('ageGate')?.open, true);
+});
+
+test('age gate still works when storage is blocked', () => {
+  const app = boot({}, { blockStorage: true });
+  assert.equal(app.elements.get('ageGate').open, true);
+  app.elements.get('ageYes').onclick();
+  assert.equal(app.elements.get('ageGate').open, false);
 });
