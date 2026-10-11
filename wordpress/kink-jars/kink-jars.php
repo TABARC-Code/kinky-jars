@@ -28,6 +28,7 @@ function kink_jars_shortcode( $atts ) {
 	$atts = shortcode_atts(
 		array(
 			'height' => '90vh',
+			'align'  => '',
 			'title'  => __( 'Kink Jars questionnaire', 'kink-jars' ),
 		),
 		$atts,
@@ -36,14 +37,17 @@ function kink_jars_shortcode( $atts ) {
 
 	// Only a plain number with px or vh gets through. Anything else falls back rather than leaking into CSS.
 	$height = preg_match( '/^[0-9]{3,4}px$|^[0-9]{2,3}vh$/', (string) $atts['height'] ) ? $atts['height'] : '90vh';
+	// wide or full uses the theme's own alignwide/alignfull classes, so the app can break out of a narrow text column.
+	$align  = in_array( $atts['align'], array( 'wide', 'full' ), true ) ? ' align' . $atts['align'] : '';
 	$src    = add_query_arg( 'v', KINK_JARS_VERSION, plugins_url( 'app/index.html', __FILE__ ) );
 
 	return sprintf(
-		'<div class="kink-jars-embed"><iframe src="%1$s" title="%2$s" style="display:block;width:100%%;height:%3$s;border:0" loading="lazy" allow="clipboard-write; web-share"></iframe><p class="kink-jars-open"><a href="%1$s" target="_blank" rel="noopener">%4$s</a></p></div>',
+		'<div class="kink-jars-embed%5$s"><iframe src="%1$s" title="%2$s" style="display:block;width:100%%;height:%3$s;border:0" loading="lazy" allow="clipboard-write; web-share"></iframe><p class="kink-jars-open"><a href="%1$s" target="_blank" rel="noopener">%4$s</a></p></div>',
 		esc_url( $src ),
 		esc_attr( $atts['title'] ),
 		esc_attr( $height ),
-		esc_html__( 'Open Kink Jars full screen', 'kink-jars' )
+		esc_html__( 'Open Kink Jars full screen', 'kink-jars' ),
+		esc_attr( $align )
 	);
 }
 add_shortcode( 'kink_jars', 'kink_jars_shortcode' );

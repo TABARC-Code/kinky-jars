@@ -36,6 +36,10 @@ foreach ( array( '100px;background:url(x)', '9999999px', '5px', '80%', 'expressi
 	check( 'rejects height ' . json_encode( $bad ), strpos( $out, 'height:90vh' ) !== false );
 }
 
+check( 'align wide adds alignwide', strpos( $render( array( 'align' => 'wide' ) ), 'class="kink-jars-embed alignwide"' ) !== false );
+check( 'align full adds alignfull', strpos( $render( array( 'align' => 'full' ) ), 'class="kink-jars-embed alignfull"' ) !== false );
+check( 'other align values are ignored', strpos( $render( array( 'align' => '" onload="x' ) ), 'class="kink-jars-embed"' ) !== false );
+
 $evil = $render( array( 'title' => '"><script>alert(1)</script>' ) );
 check( 'escapes the title', strpos( $evil, '<script>' ) === false && strpos( $evil, '&quot;&gt;&lt;script&gt;' ) !== false );
 

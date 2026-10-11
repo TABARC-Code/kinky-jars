@@ -123,8 +123,8 @@ A taller poster broke the sticky column again: the new guard test caught it at 1
 - **Releases.** `.github/workflows/release.yml` runs on pushes to `main`. If there's no release for the current `VERSION`, it builds the zip, runs both plugin checks and publishes `v<VERSION>` with the zip attached.
 - **Not on WordPress.org,** by choice: it's distributed from GitHub releases.
 
-Not checked: a real WordPress install. The shortcode is tested against stand-ins, not WordPress itself, so "install the zip on a test site" is on the owed list.
+**Real WordPress, after all.** WordPress Playground's command-line tool runs a real WordPress locally, so I installed the built zip in one and put `[kink_jars height="800px"]` on a page. It loads the bundled app at 1.5.0 from the plugin folder. The fonts load, and the age gate, a palette, a rating and saving a 2400px PNG all work, with no errors. One thing it showed: the default theme's text column is 645px, so desktop visitors got the phone layout. Hence `align="wide|full"`, which reuses the theme's own `alignwide` and `alignfull` classes; that gave 1340px and 1440px in a 1440px window. Other values are ignored, and there's a test for that.
 
 ### Ideas, not built
 
-Nothing queued. Still owed: installing the plugin zip on a real WordPress site, plus real Android and iPhone checks of download, share, cancel, reload and clear, and the compare clipboard on Safari, which is the one most likely to sulk.
+Nothing queued. Still owed: other themes and a real host (only the default block theme in Playground so far), plus real Android and iPhone checks of download, share, cancel, reload and clear, and the compare clipboard on Safari, which is the one most likely to sulk.
