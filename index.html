@@ -72,6 +72,8 @@
   .scale button{height:52px;border-radius:14px;border:2px solid var(--ink);background:#fff;font-family:var(--head);font-weight:600;font-size:22px;transition:transform .08s}
   .scale button:active{transform:scale(.94)}
   .scale button[aria-pressed=true]{background:var(--c);color:var(--on-c);box-shadow:0 3px 0 var(--ink)}
+  .nope{margin-top:10px;background:none;border:2px dashed var(--muted);border-radius:999px;padding:6px 14px;font-weight:700;font-size:15px;color:var(--muted)}
+  .nope[aria-pressed=true]{border-style:solid;border-color:var(--ink);background:var(--ink);color:#fff}
   .ends{display:flex;justify-content:space-between;max-width:380px;font-size:13px;color:var(--muted);font-weight:700;margin-top:5px}
 
   /* poster + save */
@@ -102,7 +104,7 @@
   <header>
     <h1>Fill your <span>jars</span></h1>
     <label class="easy-toggle"><input type="checkbox" id="easy"> Easy-read font</label>
-    <p>Pick a colour, rate each one from 1 (a little) to 5 (overflowing), then save your picture. Not your thing? Skip it and the jar stays empty. Adults only (18+).</p>
+    <p>Pick a colour, rate each one from 1 (a little) to 5 (overflowing), then save your picture. Not your thing? Skip it, or tap Not for me to put a cross on the jar. Adults only (18+).</p>
   </header>
 
   <div class="layout">
@@ -384,10 +386,15 @@ function cleanState(saved) {
     const value = old ? source.answers[LEGACY_IDS.indexOf(id)] : source.answers?.[id];
     answers[id] = Number.isInteger(value) && value >= 0 && value <= 5 ? value : 0;
   }
+  const no = {};
+  if (source.no && typeof source.no === "object" && !Array.isArray(source.no)) {
+    for (const { id } of QUESTIONS) if (source.no[id] === true && answers[id] === 0) no[id] = true;
+  }
   return {
     name: typeof source.name === "string" ? source.name.slice(0, 24) : "",
     color: typeof source.color === "string" && /^#[0-9a-f]{6}$/i.test(source.color) ? source.color.toLowerCase() : "#e63946",
-    answers
+    answers,
+    no
   };
 }
 let state = cleanState(null);
@@ -525,7 +532,7 @@ function jarParams(idx) {
   return P;
 }
 
-function drawJar(c, idx, level, rgb) {
+function drawJar(c, idx, level, rgb, notForMe = false) {
   const P = jarParams(idx), r = P.r, fill = css(rgb);
   c.save(); c.lineJoin = "round"; c.lineCap = "round";
 
@@ -557,6 +564,12 @@ function drawJar(c, idx, level, rgb) {
   bodyPath(c); c.lineWidth = 4.5; c.strokeStyle = INK; c.stroke();
   c.lineWidth = 2.5; c.beginPath(); c.moveTo(18, 160); c.quadraticCurveTo(26, 165, 38, 164); c.moveTo(58, 164); c.quadraticCurveTo(70, 165, 78, 160); c.stroke();
   c.beginPath(); roundRect(c, 12, 20, 72, 14, 4); c.fillStyle = level === 5 ? fill : "#fff"; c.fill(); c.lineWidth = 4; c.stroke();
+
+  // not for me: a bold cross over the empty jar
+  if (notForMe) {
+    c.lineWidth = 7; c.strokeStyle = INK;
+    c.beginPath(); c.moveTo(24, 78); c.lineTo(72, 134); c.moveTo(72, 78); c.lineTo(24, 134); c.stroke();
+  }
 
   // overflow!
   if (level === 5) {
@@ -611,16 +624,17 @@ function drawPoster(canvas, scale) {
     c.textAlign = "center"; c.fillText(name, x0 + lineW / 2, base - 18);
   }
   c.textAlign = "center"; c.font = "500 30px Oswald, 'Arial Narrow', sans-serif"; c.fillStyle = "#555";
-  c.fillText("(1 = a little  ·  5 = overflowing)", PW / 2, 200);
+  c.fillText("(1 = a little  ·  5 = overflowing  ·  X = not for me)", PW / 2, 200);
 
   const filled = Object.values(state.answers).filter(Boolean).length;
   c.fillStyle = "#555"; c.textAlign = "center"; c.font = "500 26px Oswald, 'Arial Narrow', sans-serif";
-  c.fillText(`${filled} of ${JARS.length} jars filled`, PW / 2, PH - 16);
+  const skipped = Object.keys(state.no).length;
+  c.fillText(`${filled} of ${JARS.length} jars filled` + (skipped ? ` · ${skipped} not for me` : ""), PW / 2, PH - 16);
 
   JARS.forEach((label, i) => {
     const col = i % COLS, row = Math.floor(i / COLS);
     const cx = PW / 2 + (col - (COLS - 1) / 2) * 150, top = 260 + row * 345;
-    c.save(); c.translate(cx - 48, top); drawJar(c, i, state.answers[QUESTIONS[i].id], rgb); c.restore();
+    c.save(); c.translate(cx - 48, top); drawJar(c, i, state.answers[QUESTIONS[i].id], rgb, !!state.no[QUESTIONS[i].id]); c.restore();
     let size = 30; c.font = `600 ${size}px Oswald, 'Arial Narrow', sans-serif`;
     while (label.some(l => c.measureText(l).width > 140) && size > 18) { size--; c.font = `600 ${size}px Oswald, 'Arial Narrow', sans-serif`; }
     c.fillStyle = INK; c.textAlign = "center";
@@ -628,11 +642,11 @@ function drawPoster(canvas, scale) {
   });
 }
 
-function drawMini(canvas, idx, level, rgb) {
+function drawMini(canvas, idx, level, rgb, notForMe = false) {
   canvas.width = 152; canvas.height = 248;
   const c = canvas.getContext("2d");
   c.clearRect(0, 0, 152, 248); c.translate(28, 62);
-  drawJar(c, idx, level, rgb);
+  drawJar(c, idx, level, rgb, notForMe);
 }
 
 /* ===== UI ===== */
@@ -641,16 +655,19 @@ const qWrap = $("questions"), minis = [];
 JARS.forEach((label, i) => {
   const text = label.join(" ");
   const q = document.createElement("div"); q.className = "q";
-  q.innerHTML = `<canvas aria-hidden="true"></canvas><div><div class="qnum">${i + 1} of ${JARS.length}</div><div class="qlabel"></div><div class="scale" role="group"></div><div class="ends"><span>a little</span><span>overflowing</span></div></div>`;
+  q.innerHTML = `<canvas aria-hidden="true"></canvas><div><div class="qnum">${i + 1} of ${JARS.length}</div><div class="qlabel"></div><div class="scale" role="group"></div><div class="ends"><span>a little</span><span>overflowing</span></div><button class="nope" type="button" aria-pressed="false">Not for me</button></div>`;
   q.querySelector(".qlabel").textContent = text;
   const sc = q.querySelector(".scale"); sc.setAttribute("aria-label", text);
   for (let v = 1; v <= 5; v++) {
     const b = document.createElement("button"); b.type = "button"; b.textContent = v;
     b.setAttribute("aria-label", `${text}: ${v} out of 5`);
-    b.onclick = () => { state.answers[QUESTIONS[i].id] = state.answers[QUESTIONS[i].id] === v ? 0 : v; persist(); update(); };
+    b.onclick = () => { const id = QUESTIONS[i].id; delete state.no[id]; state.answers[id] = state.answers[id] === v ? 0 : v; persist(); update(); };
     sc.appendChild(b);
   }
-  minis.push({ canvas: q.querySelector("canvas"), buttons: [...sc.children] });
+  const nope = q.querySelector(".nope");
+  nope.setAttribute("aria-label", `${text}: not for me`);
+  nope.onclick = () => { const id = QUESTIONS[i].id; if (state.no[id]) delete state.no[id]; else { state.no[id] = true; state.answers[id] = 0; } persist(); update(); };
+  minis.push({ canvas: q.querySelector("canvas"), buttons: [...sc.children], nope });
   qWrap.appendChild(q);
 });
 
@@ -701,14 +718,16 @@ function render() {
   drawMini($("pv1"), 3, 2, rgb); drawMini($("pv2"), 9, 4, rgb); drawMini($("pv3"), 2, 5, rgb);
   }
   minis.forEach((m, i) => {
-    const answer = state.answers[QUESTIONS[i].id];
-    if (lastColour !== state.color || lastAnswers.get(i) !== answer) drawMini(m.canvas, i, answer, rgb);
-    lastAnswers.set(i, answer);
+    const id = QUESTIONS[i].id, answer = state.answers[id], no = !!state.no[id], key = no ? "no" : answer;
+    if (lastColour !== state.color || lastAnswers.get(i) !== key) drawMini(m.canvas, i, answer, rgb, no);
+    lastAnswers.set(i, key);
+    m.nope.setAttribute("aria-pressed", no);
     m.buttons.forEach((b, k) => b.setAttribute("aria-pressed", state.answers[QUESTIONS[i].id] === k + 1));
   });
   lastColour = state.color;
   const n = Object.values(state.answers).filter(Boolean).length;
-  $("progress").textContent = `${n} of ${JARS.length} filled`;
+  const skipped = Object.keys(state.no).length;
+  $("progress").textContent = `${n} of ${JARS.length} filled` + (skipped ? `, ${skipped} not for me` : "");
   drawPoster($("poster"), 1);
 }
 

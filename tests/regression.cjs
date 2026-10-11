@@ -168,3 +168,34 @@ test('a corrupt preference falls back to the standard font', () => {
   const app = boot({ 'kinkjars-prefs': '{nope' });
   assert.ok(!app.document.documentElement.classes.has('easy'));
 });
+
+test('not-for-me is validated, exclusive with ratings, and shown on the poster', () => {
+  const texts = [];
+  const app = boot({ 'kinkyjars-v2': JSON.stringify({ answers: { dom: 3, sub: 0 }, no: { dom: true, sub: true, bogus: true, switch: 'yes' } }) }, { texts });
+  // dom has a rating, so its flag is dropped; unknown IDs and non-true values are ignored
+  assert.deepEqual(JSON.parse(app.run('JSON.stringify(state.no)')), { sub: true });
+  app.run('state.answers.dom = 0; state.no.dom = true; drawPoster(document.createElement("canvas"), 1);');
+  assert.ok(texts.includes('0 of 28 jars filled · 2 not for me'), texts.join(' | '));
+});
+
+test('rating a jar clears not-for-me, and not-for-me clears the rating', () => {
+  const app = boot();
+  const q = app.elements.get('questions').children[0];
+  q.nodes['.nope'].onclick();
+  assert.equal(app.run('state.no.dom'), true);
+  q.nodes['.scale'].children[2].onclick();
+  assert.equal(app.run('state.no.dom'), undefined);
+  assert.equal(app.run('state.answers.dom'), 3);
+  q.nodes['.nope'].onclick();
+  assert.equal(app.run('state.answers.dom'), 0);
+  assert.equal(app.run('state.no.dom'), true);
+  q.nodes['.nope'].onclick();
+  assert.equal(app.run('state.no.dom'), undefined);
+});
+
+test('clear removes not-for-me flags too', () => {
+  const app = boot({ 'kinkyjars-v2': JSON.stringify({ no: { dom: true } }) });
+  assert.equal(app.run('state.no.dom'), true);
+  app.elements.get('reset').onclick();
+  assert.deepEqual(JSON.parse(app.run('JSON.stringify(state.no)')), {});
+});
