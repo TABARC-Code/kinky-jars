@@ -14,13 +14,19 @@ Use **Save my jars** to prepare the image, then choose **Download PNG** or **Sha
 
 ## Reading it more easily
 
-Tick **Easy-read font** at the top to switch the page to Atkinson Hyperlegible with looser letter and word spacing. Atkinson was designed so similar characters (I, l, 1, b, d, p, q) look different. I'm dyslexic myself and it helps me, but I won't claim a font fixes dyslexia; the research on that is mixed. The choice is stored under its own key, so **Clear saved answers** leaves it alone. The exported poster keeps its own typefaces.
+Tick **Easy-read font** at the top to switch the page to Atkinson Hyperlegible with looser letter and word spacing. Atkinson was designed so similar characters (I, l, 1, b, d, p, q) look different. I'm dyslexic myself and it helps me, but I won't claim a font fixes dyslexia; the research on that is mixed. The choice is stored under its own key, so **Clear saved answers** leaves it alone. On the exported poster the legend, jar labels and footer switch too; the title and your name keep their own faces.
 
 ## Pride palettes
 
-Under the colour swatches there's a row of pride palettes: Rainbow, Progress, Trans, Bi, Pan, Ace and Non-binary. Pick one and each jar takes the next colour of the flag, so the poster comes out striped across the grid. Pick it again to switch it off. Choosing any single swatch, slider or hex code goes back to one colour. The palette is saved with your answers and kept through **Clear saved answers**.
+Under the colour swatches there's a row of pride palettes: Rainbow, Progress, Trans, Bi, Pan, Ace, Non-binary, Lesbian, Intersex, Genderqueer and Aromantic. Pick one and each jar takes the next colour of the flag, so the poster comes out striped across the grid. Pick it again to switch it off. Choosing any single swatch, slider or hex code goes back to one colour. The palette is saved with your answers and kept through **Clear saved answers**.
 
-The hex values come from the flags' own SVG files on Wikimedia Commons (pan is from Wikipedia's table). White stripes are left white, so those jars read as pale glass with a coloured outline rather than coloured liquid. Other flags are easy to add: put a new entry in `PALETTES` with an `id`, a `name`, an `accent` colour for the buttons and a `colours` list.
+Every hex value is a fill read straight out of the flag's SVG on Wikimedia Commons. White stripes are left white, so those jars read as pale glass with a coloured outline rather than coloured liquid. Other flags are easy to add: put a new entry in `PALETTES` with an `id`, a `name`, an `accent` colour for the buttons and a `colours` list.
+
+## Compare with someone
+
+**Copy my code** gives you a short text code (it starts `KJ1.`). Swap codes with a partner, paste theirs into **Their code** and press **Compare**. The page lists only the jars you're both into, best match first. Everything else is a count, with no names, so nobody learns about the other's no's from the screen.
+
+Be honest with yourself about what a code is, though. It's your name and answers in base64. Anyone who has it can decode it, so only give it to someone you'd show the poster to anyway. Nothing is uploaded; the code goes wherever you paste it.
 
 ## Not for me
 

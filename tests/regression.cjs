@@ -45,7 +45,7 @@ function boot(saved = {}, options = {}) {
     },
     requestAnimationFrame: fn => frames.push(fn), addEventListener() {}, scrollTo() {},
     confirm: () => true, matchMedia: () => ({ matches: false }),
-    navigator: options.navigator || {}, Blob, File,
+    navigator: options.navigator || {}, Blob, File, btoa, atob, TextEncoder, TextDecoder, Uint8Array,
     URL: { createObjectURL: () => { const url = 'blob:' + urls.length; urls.push(url); return url; }, revokeObjectURL: url => revoked.push(url) }
   };
   vm.createContext(sandbox); vm.runInContext(source, sandbox);
@@ -272,4 +272,53 @@ test('the poster small print switches to the easy-read face with the toggle', ()
   assert.match(app.run('smallFont(600, 30)'), /Atkinson Hyperlegible/);
   app.elements.get('easy').listeners.change({ target: { checked: false } });
   assert.match(app.run('smallFont(600, 30)'), /^600 30px Oswald/);
+});
+
+test('a compare code round-trips, including not-for-me and an awkward name', () => {
+  const app = boot();
+  app.run('state.name = "Zoë <b>&"; state.answers.dom = 4; state.answers.spit = 1; state.no.feet = true;');
+  const back = JSON.parse(app.run('JSON.stringify(decodeCode(encodeCode()))'));
+  assert.equal(back.name, 'Zoë <b>&');
+  assert.equal(back.answers.dom, 4);
+  assert.equal(back.answers.spit, 1);
+  assert.equal(back.answers.sub, 0);
+  assert.deepEqual(back.no, { feet: true });
+  assert.match(app.run('encodeCode()'), /^KJ1\.[A-Za-z0-9_-]+$/);
+});
+
+test('bad codes are refused, and hostile values are cleaned like storage', () => {
+  const app = boot();
+  for (const bad of ['', 'hello', 'KJ1.', 'KJ1.!!!', 'KJ2.e30', 'KJ1.bm90IGpzb24']) assert.equal(app.run(`decodeCode(${JSON.stringify(bad)})`), null, bad);
+  const evil = 'KJ1.' + Buffer.from(JSON.stringify({ n: 7, a: { dom: 99, sub: 3, nope: 5 }, x: ['dom', 42] })).toString('base64url');
+  const got = JSON.parse(app.run(`JSON.stringify(decodeCode(${JSON.stringify(evil)}))`));
+  assert.equal(got.name, '');
+  assert.equal(got.answers.dom, 0);
+  assert.equal(got.answers.sub, 3);
+  assert.equal(got.answers.nope, undefined);
+  assert.deepEqual(got.no, { dom: true });
+});
+
+test('compare lists only mutual jars and counts the rest without naming them', () => {
+  const app = boot();
+  app.run('state.answers.dom = 5; state.answers.sub = 2; state.answers.feet = 3; state.no.spit = true;');
+  const theirs = 'KJ1.' + Buffer.from(JSON.stringify({ n: 'Sam', a: { dom: 3, sub: 5, anal: 4 }, x: ['feet'] })).toString('base64url');
+  app.run(`$("theirCode").value = ${JSON.stringify(theirs)}`);
+  app.elements.get('compareBtn').onclick();
+  const out = app.elements.get('compareResult').children;
+  const list = out.find(el => el.className === 'cmp-list');
+  const rows = list.children.map(li => li.children.map(n => n.textContent).join(' | '));
+  assert.deepEqual(rows, ['being a dom | you 5, Sam 3', 'being a sub | you 2, Sam 5']);
+  const note = out.find(el => el.className === 'cmp-note').textContent;
+  assert.match(note, /both into 2/);
+  assert.match(note, /3 more didn't match/);
+  assert.doesNotMatch(note, /anal|feet|spit/);
+});
+
+test('a broken code shows a message instead of a list', () => {
+  const app = boot();
+  app.run('$("theirCode").value = "not a code"');
+  app.elements.get('compareBtn').onclick();
+  const out = app.elements.get('compareResult').children;
+  assert.equal(out.length, 1);
+  assert.match(out[0].textContent, /doesn't look like/);
 });

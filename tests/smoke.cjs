@@ -85,3 +85,22 @@ test('picking a pride palette recolours the page, survives a reload, and a swatc
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 390);
     assert.deepEqual(problems, []);
   }));
+
+test('compare: copying gives a code one way or another, and pasting one lists mutual jars', opts, () =>
+  withPage(320, async (page, problems) => {
+    await page.click('.q >> nth=0 >> .scale button:nth-child(4)');
+    await page.click('.q >> nth=1 >> .scale button:nth-child(2)');
+    await page.click('#copyCode');
+    // Either the clipboard took it, or the fallback box is showing the code
+    await page.waitForFunction(() => /copied|clipboard/i.test(document.getElementById('status').textContent));
+    const code = await page.evaluate(() => encodeCode());
+    const theirs = await page.evaluate(() => encodeCode({ name: 'Sam', answers: { dom: 5, sub: 0, feet: 2 }, no: {} }));
+    assert.match(code, /^KJ1\./);
+    await page.fill('#theirCode', theirs);
+    await page.click('#compareBtn');
+    const rows = await page.locator('.cmp-list li').allTextContents();
+    assert.equal(rows.length, 1);
+    assert.match(rows[0], /being a dom.*you 4, Sam 5/);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 320);
+    assert.deepEqual(problems, []);
+  }));

@@ -79,9 +79,18 @@ Checked in real Chromium: Progress and Ace posters, and the picker on a 390px sc
 
 Still not checked: real phones, Safari and the share sheet.
 
+## 11 October 2026, later — 1.3.0
+
+**Flags.** Added Lesbian (2018 sunset), Intersex, Genderqueer and Aromantic. All eleven palettes are now fills read straight out of the Wikimedia SVGs. I fetched them from `upload.wikimedia.org` by the file name's MD5 path, which dodged the rate limiting on `Special:FilePath`. That also cleared the two caveats from 1.2.0: Progress is now read from the file itself, and Pan from `Pansexuality_Pride_Flag.svg`. Intersex only has two colours, yellow and purple, so its jars alternate. The palette test now accepts two.
+
+**Compare.** A code is `KJ1.` plus base64url JSON: name, answered IDs and not-for-me IDs. Decoding runs through `cleanState`, so a pasted code gets the same checks as storage: bad ratings drop to 0, unknown IDs vanish, and a name that isn't a string becomes empty. Results are built with `textContent` only, so a name like `<b>` stays text. Only mutual jars are listed; the rest are counted, not named. A typical code is around 120–300 characters. If the clipboard is blocked, the code appears in a box to copy by hand. I didn't do the PNG-metadata version: a text code covers the same need with far less code. PNG metadata would need a chunk writer and reader, and phone galleries often strip it anyway.
+
+**Easy-read poster.** The legend, labels and footer use Atkinson Hyperlegible when the toggle is on. Long labels such as "ddlg / mdlb" shrink a fair bit because Atkinson is wider. It's still legible, but if it bothers anyone, that label could be split across two lines in `QUESTIONS`.
+
+**Measured, then left alone.** Save on every slider move costs about 0.007ms (0.03ms with the CPU throttled 4x in Chromium). A full render is about 2ms (7ms throttled), which is inside a frame. Throttling `persist()` would be code for nothing, so it's struck off the list.
+
+**CI.** `actions/checkout` and `actions/setup-node` bumped to v5, which drops the Node 20 deprecation warning.
+
 ### Ideas, not built
 
-- More flags (lesbian, intersex, genderqueer, and so on) once I can verify their colours.
-- Compare mode: load two exports side by side and highlight overlaps. Needs a way to read a poster back, so probably a small encoded payload in the PNG metadata.
-- Throttle `persist()` on slider drags. Harmless at this size; I'd want a measurement before touching it.
-- Option to apply the easy-read font to the exported poster as well.
+Nothing queued. Still owed: real Android and iPhone checks of download, share, cancel, reload and clear, and the compare clipboard on Safari, which is the one most likely to sulk.
