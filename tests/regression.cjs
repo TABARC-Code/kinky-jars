@@ -45,7 +45,7 @@ function boot(saved = {}, options = {}) {
     },
     requestAnimationFrame: fn => frames.push(fn), addEventListener() {}, scrollTo() {},
     confirm: () => true, matchMedia: () => ({ matches: false }),
-    navigator: options.navigator || {}, Blob, File,
+    navigator: options.navigator || {}, Blob, File, btoa, atob, TextEncoder, TextDecoder, Uint8Array,
     URL: { createObjectURL: () => { const url = 'blob:' + urls.length; urls.push(url); return url; }, revokeObjectURL: url => revoked.push(url) }
   };
   vm.createContext(sandbox); vm.runInContext(source, sandbox);
@@ -229,11 +229,11 @@ test('palette ids are validated and an unknown one falls back to a single colour
 test('every palette uses valid hex colours and a usable accent', () => {
   const app = boot();
   const palettes = JSON.parse(app.run('JSON.stringify(PALETTES)'));
-  assert.ok(palettes.length >= 7);
+  assert.ok(palettes.length >= 11);
   assert.equal(new Set(palettes.map(p => p.id)).size, palettes.length);
   for (const p of palettes) {
     assert.match(p.accent, /^#[0-9a-f]{6}$/);
-    assert.ok(p.colours.length >= 3, p.id);
+    assert.ok(p.colours.length >= 2, p.id);
     for (const c of p.colours) assert.match(c, /^#[0-9a-f]{6}$/, p.id);
   }
 });
@@ -264,4 +264,72 @@ test('the version constant matches the newest line of the history comment', () =
   const head = fs.readFileSync(require('node:path').join(__dirname, '../index.html'), 'utf8').split('<script>')[1].split('*/')[0];
   const newest = head.match(/^\s+(\d+\.\d+\.\d+)\s/m)[1];
   assert.equal(boot().run('VERSION'), newest);
+});
+
+test('the poster small print switches to the easy-read face with the toggle', () => {
+  const app = boot();
+  app.elements.get('easy').listeners.change({ target: { checked: true } });
+  assert.match(app.run('smallFont(600, 30)'), /Atkinson Hyperlegible/);
+  app.elements.get('easy').listeners.change({ target: { checked: false } });
+  assert.match(app.run('smallFont(600, 30)'), /^600 30px Oswald/);
+});
+
+test('a compare code round-trips, including not-for-me and an awkward name', () => {
+  const app = boot();
+  app.run('state.name = "Zoë <b>&"; state.answers.dom = 4; state.answers.spit = 1; state.no.feet = true;');
+  const back = JSON.parse(app.run('JSON.stringify(decodeCode(encodeCode()))'));
+  assert.equal(back.name, 'Zoë <b>&');
+  assert.equal(back.answers.dom, 4);
+  assert.equal(back.answers.spit, 1);
+  assert.equal(back.answers.sub, 0);
+  assert.deepEqual(back.no, { feet: true });
+  assert.match(app.run('encodeCode()'), /^KJ1\.[A-Za-z0-9_-]+$/);
+});
+
+test('bad codes are refused, and hostile values are cleaned like storage', () => {
+  const app = boot();
+  for (const bad of ['', 'hello', 'KJ1.', 'KJ1.!!!', 'KJ2.e30', 'KJ1.bm90IGpzb24']) assert.equal(app.run(`decodeCode(${JSON.stringify(bad)})`), null, bad);
+  const evil = 'KJ1.' + Buffer.from(JSON.stringify({ n: 7, a: { dom: 99, sub: 3, nope: 5 }, x: ['dom', 42] })).toString('base64url');
+  const got = JSON.parse(app.run(`JSON.stringify(decodeCode(${JSON.stringify(evil)}))`));
+  assert.equal(got.name, '');
+  assert.equal(got.answers.dom, 0);
+  assert.equal(got.answers.sub, 3);
+  assert.equal(got.answers.nope, undefined);
+  assert.deepEqual(got.no, { dom: true });
+});
+
+test('compare lists only mutual jars and counts the rest without naming them', () => {
+  const app = boot();
+  app.run('state.answers.dom = 5; state.answers.sub = 2; state.answers.feet = 3; state.no.spit = true;');
+  const theirs = 'KJ1.' + Buffer.from(JSON.stringify({ n: 'Sam', a: { dom: 3, sub: 5, anal: 4 }, x: ['feet'] })).toString('base64url');
+  app.run(`$("theirCode").value = ${JSON.stringify(theirs)}`);
+  app.elements.get('compareBtn').onclick();
+  const out = app.elements.get('compareResult').children;
+  const list = out.find(el => el.className === 'cmp-list');
+  const rows = list.children.map(li => li.children.map(n => n.textContent).join(' | '));
+  assert.deepEqual(rows, ['being a dom | you 5, Sam 3', 'being a sub | you 2, Sam 5']);
+  const note = out.find(el => el.className === 'cmp-note').textContent;
+  assert.match(note, /both into 2/);
+  // dom and sub are on both lists; feet is mine only, anal theirs only. spit (my no) isn't counted at all.
+  assert.match(note, /2 more are on only one of your lists/);
+  assert.doesNotMatch(note, /anal|feet|spit/);
+});
+
+test('a broken code shows a message instead of a list', () => {
+  const app = boot();
+  app.run('$("theirCode").value = "not a code"');
+  app.elements.get('compareBtn').onclick();
+  const out = app.elements.get('compareResult').children;
+  assert.equal(out.length, 1);
+  assert.match(out[0].textContent, /doesn't look like/);
+});
+
+test('with no name in their code, the list says "them" in lower case', () => {
+  const app = boot();
+  app.run('state.answers.dom = 2;');
+  const theirs = 'KJ1.' + Buffer.from(JSON.stringify({ n: '', a: { dom: 4 } })).toString('base64url');
+  app.run(`$("theirCode").value = ${JSON.stringify(theirs)}`);
+  app.elements.get('compareBtn').onclick();
+  const list = app.elements.get('compareResult').children.find(el => el.className === 'cmp-list');
+  assert.equal(list.children[0].children[1].textContent, 'you 2, them 4');
 });

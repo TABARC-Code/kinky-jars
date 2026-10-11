@@ -85,3 +85,40 @@ test('picking a pride palette recolours the page, survives a reload, and a swatc
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 390);
     assert.deepEqual(problems, []);
   }));
+
+test('compare: copying gives a code one way or another, and pasting one lists mutual jars', opts, () =>
+  withPage(320, async (page, problems) => {
+    await page.click('.q >> nth=0 >> .scale button:nth-child(4)');
+    await page.click('.q >> nth=1 >> .scale button:nth-child(2)');
+    await page.click('#copyCode');
+    // Either the clipboard took it, or the fallback box is showing the code
+    await page.waitForFunction(() => /copied|clipboard/i.test(document.getElementById('status').textContent));
+    const code = await page.evaluate(() => encodeCode());
+    const theirs = await page.evaluate(() => encodeCode({ name: 'Sam', answers: { dom: 5, sub: 0, feet: 2 }, no: {} }));
+    assert.match(code, /^KJ1\./);
+    await page.fill('#theirCode', theirs);
+    await page.click('#compareBtn');
+    const rows = await page.locator('.cmp-list li').allTextContents();
+    assert.equal(rows.length, 1);
+    assert.match(rows[0], /being a dom.*you 4, Sam 5/);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 320);
+    assert.deepEqual(problems, []);
+  }));
+
+for (const height of [800, 1000]) {
+  test(`desktop side column at ${height}px tall: sticky only when it fits, compare never hidden inside it`, opts, async () => {
+    const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
+    try {
+      const page = await browser.newPage({ viewport: { width: 1280, height } });
+      await page.addInitScript(() => localStorage.setItem('kinkjars-18', 'yes'));
+      await page.goto(PAGE);
+      const r = await page.evaluate(() => {
+        const side = document.querySelector('.side');
+        return { sticky: getComputedStyle(side).position === 'sticky', sideHeight: side.getBoundingClientRect().height, inSide: !!side.querySelector('#compare') };
+      });
+      assert.equal(r.inSide, false);
+      if (r.sticky) assert.ok(r.sideHeight <= height - 20, `sticky column is ${r.sideHeight}px in a ${height}px window`);
+      assert.equal(r.sticky, height >= 900);
+    } finally { await browser.close(); }
+  });
+}

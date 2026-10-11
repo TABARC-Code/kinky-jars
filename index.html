@@ -32,7 +32,9 @@
   .easy-toggle{display:inline-flex;align-items:center;gap:10px;margin-top:14px;font-weight:700;font-size:16px}
   .easy-toggle input{width:22px;height:22px;accent-color:var(--ink)}
   .layout{display:grid;gap:24px;grid-template-columns:minmax(0,1fr)}
-  @media(min-width:960px){.layout{grid-template-columns:minmax(0,1fr) 430px}.side{position:sticky;top:20px;align-self:start}}
+  @media(min-width:960px){.layout{grid-template-columns:minmax(0,1fr) 430px}.side{align-self:start}}
+  /* Only stick the poster when the whole panel fits; on shorter screens it scrolls like everything else. */
+  @media(min-width:960px) and (min-height:900px){.side{position:sticky;top:20px}}
   .panel{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:20px;margin-bottom:20px}
   .step{font-family:var(--head);font-weight:600;font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
   h2{font-family:var(--head);font-weight:600;font-size:27px;margin:2px 0 12px;line-height:1.15}
@@ -102,6 +104,14 @@
   .sheet h3{font-family:var(--head);font-size:28px;margin:0 0 6px}
   .sheet p{margin:0 0 12px;color:var(--muted);font-size:16px}
   .sheet img{width:100%;border-radius:10px;border:2px solid var(--line)}
+  @media(min-width:960px){.cmp{max-width:calc(100% - 454px)}}
+  .cmp input[type=text]{font-size:16px;padding:10px 12px;margin:6px 0 10px;font-family:ui-monospace,Menlo,monospace}
+  .cmp-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .cmp-list{list-style:none;padding:0;margin:12px 0 0}
+  .cmp-list li{padding:8px 0;border-top:2px dashed var(--line);display:flex;justify-content:space-between;gap:12px}
+  .cmp-list li:first-child{border-top:0}
+  .cmp-list b{font-family:var(--head)}
+  .cmp-note{color:var(--muted);font-size:15px;margin-top:10px}
   .privacy{font-size:14px;color:var(--muted);text-align:center;margin-top:8px}
 </style>
 </head>
@@ -169,6 +179,17 @@
       </section>
     </aside>
   </div>
+  <section class="panel cmp" id="compare">
+    <div class="step">Optional</div>
+    <h2>Compare with someone</h2>
+    <p class="hint">Swap codes with a partner. The page only lists the jars you're both into. A code does contain all your answers, though, so only give it to someone you trust.</p>
+    <div class="cmp-row"><button class="ghost" id="copyCode" type="button">Copy my code</button></div>
+    <input type="text" id="myCode" readonly hidden aria-label="Your code" spellcheck="false">
+    <label for="theirCode" style="display:block;margin-top:12px;font-weight:700;font-size:16px">Their code</label>
+    <input type="text" id="theirCode" placeholder="Paste their code here" autocomplete="off" spellcheck="false">
+    <div class="cmp-row"><button class="ghost" id="compareBtn" type="button">Compare</button></div>
+    <div id="compareResult" aria-live="polite"></div>
+  </section>
 </div>
 
 <div class="bar"><div class="bar-in"><span id="progress">0 of 28 filled</span><button class="big" id="saveBar" type="button">Save my jars</button></div></div>
@@ -195,10 +216,12 @@
 
 <script>
 /* Kinky Jars. Version history, newest first. Short notes so future me knows why it is the way it is.
+   1.3.1  Review fixes: compare out of the sticky column, sticky only on tall screens, honest compare counts, font licences bundled.
+   1.3.0  Compare codes (only mutual jars shown), four more flags, poster follows easy-read.
    1.2.0  Pride palettes: each jar takes the next colour of a flag. Hex values checked against Wikimedia and Wikipedia (see NOTES.md).
    1.1.0  "Not for me" flag, easy-read font, 18+ gate, fonts bundled, CI and browser smoke tests.
    1.0.0  First proper tidy: validated storage, answers keyed by ID, save and share reworked. */
-const VERSION = "1.2.0";
+const VERSION = "1.3.1";
 /* Keep each ID with its label when moving questions. IDs are saved; wording can change. */
 const QUESTIONS = [
   {
@@ -394,8 +417,8 @@ const QUESTIONS = [
 const JARS = QUESTIONS.map(question => question.label);
 const PRESETS = ["#e63946","#ff5d8f","#ff8c42","#ffd23f","#7bd389","#2ec4b6","#3a86ff","#5b2a86","#c77dff","#8d1d3a","#8d5524","#2b2d42"];
 /* Pride palettes. Jar i takes colours[i % colours.length]; accent is what the buttons and sliders use.
-   Hex values are from the flags' own SVG files on Wikimedia Commons, except pan, which is the
-   Wikipedia table (itself citing the 2010 Tumblr post). White stripes stay white on purpose. */
+   Every hex value is a fill read straight out of the flag's SVG on Wikimedia Commons. Intersex is
+   yellow with a purple ring, so its jars simply alternate. White stripes stay white on purpose. */
 const PALETTES = [
   { id: "rainbow", name: "Rainbow", accent: "#e40303", colours: ["#e40303", "#ff8c00", "#ffed00", "#008026", "#004dff", "#750787"] },
   { id: "progress", name: "Progress", accent: "#e40303", colours: ["#e40303", "#ff8c00", "#ffed00", "#008026", "#004dff", "#750787", "#000000", "#613915", "#74d7ee", "#ffafc8", "#ffffff"] },
@@ -403,7 +426,11 @@ const PALETTES = [
   { id: "bi", name: "Bi", accent: "#d60270", colours: ["#d60270", "#9b4f96", "#0038a8"] },
   { id: "pan", name: "Pan", accent: "#ff218c", colours: ["#ff218c", "#ffd800", "#21b1ff"] },
   { id: "ace", name: "Ace", accent: "#800080", colours: ["#000000", "#a3a3a3", "#ffffff", "#800080"] },
-  { id: "nonbinary", name: "Non-binary", accent: "#9c59d0", colours: ["#fff433", "#ffffff", "#9c59d0", "#2d2d2d"] }
+  { id: "nonbinary", name: "Non-binary", accent: "#9c59d0", colours: ["#fff433", "#ffffff", "#9c59d0", "#2d2d2d"] },
+  { id: "lesbian", name: "Lesbian", accent: "#d52d00", colours: ["#d52d00", "#ef7627", "#ff9a56", "#ffffff", "#d162a4", "#b55690", "#a30262"] },
+  { id: "intersex", name: "Intersex", accent: "#7902aa", colours: ["#ffd800", "#7902aa"] },
+  { id: "genderqueer", name: "Genderqueer", accent: "#b57edc", colours: ["#b57edc", "#ffffff", "#4a8123"] },
+  { id: "aromantic", name: "Aromantic", accent: "#3da542", colours: ["#3da542", "#a7d379", "#ffffff", "#a9a9a9", "#000000"] }
 ];
 const COLS = 7, INK = "#151311", PW = 1200;
 const ROWS = Math.ceil(JARS.length / COLS);
@@ -444,7 +471,11 @@ try {
   storageWarning = "Saved answers couldn't be read. You can still fill in and save an image.";
 }
 const STORE_PREFS = "kinkjars-prefs";
+let easyRead = false;
+// The poster's small print follows the easy-read setting too; title and name keep their character.
+const smallFont = (weight, size) => easyRead ? `700 ${size}px "Atkinson Hyperlegible", sans-serif` : `${weight} ${size}px Oswald, 'Arial Narrow', sans-serif`;
 function setEasy(on) {
+  easyRead = on;
   document.documentElement.classList.toggle("easy", on);
   $("easy").checked = on;
 }
@@ -665,11 +696,11 @@ function drawPoster(canvas, scale) {
     while (c.measureText(name).width > lineW - 12 && size > 20) { size -= 2; c.font = `${size}px "Permanent Marker", "Comic Sans MS", cursive`; }
     c.textAlign = "center"; c.fillText(name, x0 + lineW / 2, base - 18);
   }
-  c.textAlign = "center"; c.font = "500 30px Oswald, 'Arial Narrow', sans-serif"; c.fillStyle = "#555";
+  c.textAlign = "center"; c.font = smallFont(500, 30); c.fillStyle = "#555";
   c.fillText("(1 = a little  ·  5 = overflowing  ·  X = not for me)", PW / 2, 200);
 
   const filled = Object.values(state.answers).filter(Boolean).length;
-  c.fillStyle = "#555"; c.textAlign = "center"; c.font = "500 26px Oswald, 'Arial Narrow', sans-serif";
+  c.fillStyle = "#555"; c.textAlign = "center"; c.font = smallFont(500, 26);
   const skipped = Object.keys(state.no).length;
   c.fillText(`${filled} of ${JARS.length} jars filled` + (skipped ? ` · ${skipped} not for me` : ""), PW / 2, PH - 16);
 
@@ -677,8 +708,8 @@ function drawPoster(canvas, scale) {
     const col = i % COLS, row = Math.floor(i / COLS);
     const cx = PW / 2 + (col - (COLS - 1) / 2) * 150, top = 260 + row * 345;
     c.save(); c.translate(cx - 48, top); drawJar(c, i, state.answers[QUESTIONS[i].id], jarRgb(i), !!state.no[QUESTIONS[i].id]); c.restore();
-    let size = 30; c.font = `600 ${size}px Oswald, 'Arial Narrow', sans-serif`;
-    while (label.some(l => c.measureText(l).width > 140) && size > 18) { size--; c.font = `600 ${size}px Oswald, 'Arial Narrow', sans-serif`; }
+    let size = 30; c.font = smallFont(600, size);
+    while (label.some(l => c.measureText(l).width > 140) && size > 18) { size--; c.font = smallFont(600, size); }
     c.fillStyle = INK; c.textAlign = "center";
     label.forEach((l, k) => c.fillText(l, cx, top + 170 + 44 + k * (size + 4)));
   });
@@ -746,6 +777,7 @@ $("surprise").onclick = () => {
 try { setEasy(JSON.parse(localStorage.getItem(STORE_PREFS) ?? "null")?.easy === true); } catch (e) { setEasy(false); }
 $("easy").addEventListener("change", e => {
   setEasy(e.target.checked);
+  update();
   try { localStorage.setItem(STORE_PREFS, JSON.stringify({ easy: e.target.checked })); } catch (err) { /* preference just won't stick */ }
 });
 $("ver").textContent = VERSION;
@@ -877,6 +909,72 @@ $("reset").onclick = () => {
   scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
 };
 
+/* ===== compare =====
+   A code is "KJ1." plus base64url JSON: name, answered IDs and not-for-me IDs. Decoding goes back
+   through cleanState, so a pasted code gets exactly the same checks as browser storage. */
+function encodeCode(from = state) {
+  const a = {};
+  for (const { id } of QUESTIONS) if (from.answers[id]) a[id] = from.answers[id];
+  const json = JSON.stringify({ n: from.name.trim(), a, x: Object.keys(from.no) });
+  const bytes = new TextEncoder().encode(json);
+  return "KJ1." + btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function decodeCode(code) {
+  const m = /^KJ1\.([A-Za-z0-9_-]+)$/.exec(String(code).replace(/\s+/g, ""));
+  if (!m) return null;
+  try {
+    const b64 = m[1].replace(/-/g, "+").replace(/_/g, "/");
+    const json = new TextDecoder().decode(Uint8Array.from(atob(b64), ch => ch.charCodeAt(0)));
+    const raw = JSON.parse(json);
+    if (!raw || typeof raw !== "object") return null;
+    const no = {};
+    if (Array.isArray(raw.x)) for (const id of raw.x) if (typeof id === "string") no[id] = true;
+    return cleanState({ name: raw.n, answers: raw.a, no });
+  } catch (e) { return null; }
+}
+// Only mutual jars are listed. Jars on just one list are counted, never named; no's aren't counted at all.
+function compareWith(theirs) {
+  const both = [];
+  let other = 0;
+  QUESTIONS.forEach(({ id, label }) => {
+    const mine = state.answers[id], them = theirs.answers[id];
+    if (mine > 0 && them > 0) both.push({ text: label.join(" "), mine, them });
+    else if (mine > 0 || them > 0) other++;
+  });
+  both.sort((x, y) => Math.min(y.mine, y.them) - Math.min(x.mine, x.them) || (y.mine + y.them) - (x.mine + x.them));
+  return { both, other };
+}
+$("copyCode").onclick = async () => {
+  const code = encodeCode();
+  $("myCode").value = code;
+  try {
+    await navigator.clipboard.writeText(code);
+    $("status").textContent = "Code copied. Send it to your partner however you like.";
+  } catch (e) {
+    $("myCode").hidden = false; $("myCode").focus(); $("myCode").select?.();
+    $("status").textContent = "Couldn't reach the clipboard. Your code is in the box; copy it from there.";
+  }
+};
+$("compareBtn").onclick = () => {
+  const out = $("compareResult");
+  out.textContent = "";
+  const theirs = decodeCode($("theirCode").value);
+  const note = document.createElement("p"); note.className = "cmp-note";
+  if (!theirs) { note.textContent = "That doesn't look like a Kink Jars code. Check it was copied in full."; out.appendChild(note); return; }
+  const who = theirs.name.trim() || "them";
+  const { both, other } = compareWith(theirs);
+  const list = document.createElement("ul"); list.className = "cmp-list";
+  for (const row of both) {
+    const li = document.createElement("li");
+    const t = document.createElement("b"); t.textContent = row.text;
+    const v = document.createElement("span"); v.textContent = `you ${row.mine}, ${who} ${row.them}`;
+    li.appendChild(t); li.appendChild(v); list.appendChild(li);
+  }
+  note.textContent = (both.length ? `You're both into ${both.length} of these.` : "No jars in common yet.") + (other ? ` ${other} more are on only one of your lists; talk about those in person if you want to.` : "");
+  out.appendChild(note);
+  if (both.length) out.appendChild(list);
+};
+
 const STORE_AGE = "kinkjars-18";
 function ageConfirmed() { try { return localStorage.getItem(STORE_AGE) === "yes"; } catch (e) { return false; } }
 if (!ageConfirmed()) {
@@ -891,7 +989,7 @@ if (!ageConfirmed()) {
 
 $("status").textContent = storageWarning;
 render();
-const fontsReady = Promise.all(["700 104px Oswald", "600 30px Oswald", "500 30px Oswald", '66px "Permanent Marker"'].map(font => document.fonts.load(font)))
+const fontsReady = Promise.all(["700 104px Oswald", "600 30px Oswald", "500 30px Oswald", '66px "Permanent Marker"', '700 30px "Atkinson Hyperlegible"'].map(font => document.fonts.load(font)))
   .catch(() => {}).then(() => document.fonts.ready);
 fontsReady.then(update);
 </script>
