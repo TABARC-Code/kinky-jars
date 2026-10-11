@@ -36,7 +36,7 @@ A jar can be empty because you skipped it or because it's a firm no. Those used 
 
 Edit `QUESTIONS` near the start of the script. Each question has an `id` and a `label` array, with one entry per printed line. Move the whole object when reordering questions, keep existing IDs unchanged and give new questions unique IDs. Don't edit `LEGACY_IDS`: that list records the original order for migrating older answers.
 
-The poster uses seven columns and adds rows as needed. Preset colours live in `PRESETS`; overflow artwork is seeded by position, so the same layout draws consistently.
+There are 35 questions. The poster uses seven columns and adds rows as needed, and the on-screen preview scales itself to fit the window. Preset colours live in `PRESETS`; overflow artwork is seeded by position, so the same layout draws consistently.
 
 ## Checks and development notes
 

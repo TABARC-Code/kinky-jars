@@ -105,7 +105,7 @@ test('compare: copying gives a code one way or another, and pasting one lists mu
     assert.deepEqual(problems, []);
   }));
 
-for (const height of [800, 1000]) {
+for (const height of [650, 800, 1000]) {
   test(`desktop side column at ${height}px tall: sticky only when it fits, compare never hidden inside it`, opts, async () => {
     const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
     try {
@@ -118,7 +118,7 @@ for (const height of [800, 1000]) {
       });
       assert.equal(r.inSide, false);
       if (r.sticky) assert.ok(r.sideHeight <= height - 20, `sticky column is ${r.sideHeight}px in a ${height}px window`);
-      assert.equal(r.sticky, height >= 900);
+      assert.equal(r.sticky, height >= 700);
     } finally { await browser.close(); }
   });
 }

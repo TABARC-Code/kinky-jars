@@ -104,6 +104,14 @@ Read the whole script and the docs again before merging 1.3.0, and found these:
 
 29 logic and 15 browser checks pass.
 
+## 11 October 2026 — 1.4.0, seven more jars
+
+Added seven jars, picked to fill gaps rather than pad the list: being a brat, taming brats, primal play, pet play, praise, blindfolds and watching others. That's exactly one more poster row (35 jars, five rows of seven). Brat and taming are a pair, like tying and being tied up. Praise balances the two degradation jars. Blindfolds is an easy starter. Watching others is the other side of "doing stuff in public". Each has a new ID, so older saves load with the new jars empty. A test checks that.
+
+Aftercare isn't a kink, so it isn't a jar. It's one line in the compare panel instead: agree a safeword and talk about aftercare before you start.
+
+A taller poster broke the sticky column again: the new guard test caught it at 1010px in a 1000px window. Rather than raise the threshold every time a row gets added, the preview poster now scales to the window height (`max-height: calc(100vh - 400px)`), and the column sticks from 700px tall. The smoke test checks 650, 800 and 1000px. The exported PNG is unaffected, at 2400 by 4000.
+
 ### Ideas, not built
 
 Nothing queued. Still owed: real Android and iPhone checks of download, share, cancel, reload and clear, and the compare clipboard on Safari, which is the one most likely to sulk.
