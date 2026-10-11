@@ -68,5 +68,6 @@ test('save produces a PNG and Escape returns focus', opts, () =>
     await page.waitForSelector('#modal[open]');
     assert.ok(await page.evaluate(() => document.getElementById('modalImg').naturalWidth) > 1000);
     await page.keyboard.press('Escape');
-    assert.equal(await page.evaluate(() => document.activeElement.id), 'save');
+    // The dialog's close event is queued, so wait for focus to land rather than reading it straight away.
+    await page.waitForFunction(() => !document.getElementById('modal').open && document.activeElement.id === 'save', null, { timeout: 3000 });
   }));
