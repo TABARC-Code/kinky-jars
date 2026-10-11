@@ -46,9 +46,19 @@ Also: `role="group"` on the swatches so the label is actually announced, an "Adu
 
 Still not checked: real phones, Safari, the share sheet. Same list as before.
 
+### Follow-up the same day
+
+All five ideas from the list I'd drafted, plus an easy-read font:
+
+- **CI and a browser smoke test.** Added `.github/workflows/test.yml` and `tests/smoke.cjs`. I proved the smoke test can fail: reverting the swatch and grid CSS makes both 320px checks go red, and a wrong font path fails the font check. Both restored afterwards.
+- **Not for me.** Stored as a separate `no` map rather than a sentinel value such as -1 in `answers`, so rating validation, the legacy array migration and the old tests didn't have to change. It is dropped on load if the jar also has a rating, and unknown IDs are ignored. Drawn as a cross on the jar.
+- **Age gate.** A modal on the first visit; Escape is blocked, "Leave" goes to a blank page, and a yes is remembered under `kinkjars-18`. It's a self-declaration. It stays in storage after Clear because it isn't personal data. If storage is blocked it asks every visit.
+- **Fonts bundled.** Oswald, Nunito and Permanent Marker, plus Atkinson Hyperlegible, now live in `fonts/` (about 125KB of Latin subsets). Oswald and Nunito are variable, so one file each covers every weight. The page makes zero outside requests, and the privacy line says so. I haven't verified the licence texts upstream; see `fonts/LICENCES.md`.
+- **Easy-read font.** Atkinson Hyperlegible with extra letter and word spacing and taller lines, behind a toggle at the top. Its own storage key, kept through Clear. I picked it over Lexend because its character shapes are deliberately distinct, which is the thing that bites me; I haven't compared the two on other readers. Only the on-screen page changes. The exported poster still uses the original typefaces.
+- **Grid tweak.** With easy-read's extra spacing the page overflowed by 1px at 320px. `.layout` now uses `minmax(0,1fr)` for its column, which stops text widening the page.
+
 ### Ideas, not built
 
-- A "not for me" state, separate from "haven't answered". Right now 0 means both. It needs a data-model change and a migration, so not a drive-by.
 - Compare mode: load two exports side by side and highlight overlaps. Needs a way to read a poster back, so probably a small encoded payload in the PNG metadata.
-- Bundle the fonts so the page makes no external requests and the privacy line gets shorter.
 - Throttle `persist()` on slider drags. Harmless at this size; I'd want a measurement before touching it.
+- Option to apply the easy-read font to the exported poster as well.

@@ -199,3 +199,23 @@ test('clear removes not-for-me flags too', () => {
   app.elements.get('reset').onclick();
   assert.deepEqual(JSON.parse(app.run('JSON.stringify(state.no)')), {});
 });
+
+test('age gate opens until confirmed, cannot be escaped, and remembers a yes', () => {
+  const app = boot();
+  const gate = app.elements.get('ageGate');
+  assert.equal(gate.open, true);
+  let prevented = false;
+  gate.listeners.cancel({ preventDefault() { prevented = true; } });
+  assert.equal(prevented, true);
+  app.elements.get('ageYes').onclick();
+  assert.equal(gate.open, false);
+  assert.equal(app.data.get('kinkjars-18'), 'yes');
+  assert.notEqual(boot({ 'kinkjars-18': 'yes' }).elements.get('ageGate')?.open, true);
+});
+
+test('age gate still works when storage is blocked', () => {
+  const app = boot({}, { blockStorage: true });
+  assert.equal(app.elements.get('ageGate').open, true);
+  app.elements.get('ageYes').onclick();
+  assert.equal(app.elements.get('ageGate').open, false);
+});

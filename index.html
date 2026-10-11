@@ -89,8 +89,8 @@
   .bar .big{width:auto;margin:0;padding:12px 22px;font-size:21px;box-shadow:0 4px 0 var(--ink)}
   @media(min-width:960px){.bar{display:none}}
 
-  #modal{border:0;padding:0;background:transparent;max-width:calc(100% - 32px);max-height:92vh}
-  #modal::backdrop{background:rgba(20,16,12,.6)}
+  #modal,#ageGate{border:0;padding:0;background:transparent;max-width:calc(100% - 32px);max-height:92vh}
+  #modal::backdrop,#ageGate::backdrop{background:rgba(20,16,12,.6)}
   button:disabled{cursor:wait;opacity:.7}
   .sheet{background:#fff;border-radius:22px;padding:20px;max-width:440px;width:100%;max-height:92vh;overflow:auto;text-align:center}
   .sheet h3{font-family:var(--head);font-size:28px;margin:0 0 6px}
@@ -162,6 +162,15 @@
 </div>
 
 <div class="bar"><div class="bar-in"><span id="progress">0 of 28 filled</span><button class="big" id="saveBar" type="button">Save my jars</button></div></div>
+
+<dialog id="ageGate" aria-labelledby="agt">
+  <div class="sheet">
+    <h3 id="agt">Adults only</h3>
+    <p>This questionnaire covers adult sexual preferences. You need to be 18 or over to use it. It's a self-declaration; nothing is checked or stored except that you said yes.</p>
+    <button class="big" id="ageYes" type="button">I'm 18 or over</button>
+    <button class="ghost" id="ageNo" type="button" style="margin-top:14px">Leave</button>
+  </div>
+</dialog>
 
 <dialog id="modal" aria-labelledby="mt">
   <div class="sheet">
@@ -814,6 +823,18 @@ $("reset").onclick = () => {
   update();
   scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
 };
+
+const STORE_AGE = "kinkjars-18";
+function ageConfirmed() { try { return localStorage.getItem(STORE_AGE) === "yes"; } catch (e) { return false; } }
+if (!ageConfirmed()) {
+  $("ageGate").addEventListener("cancel", event => event.preventDefault());
+  $("ageYes").onclick = () => {
+    try { localStorage.setItem(STORE_AGE, "yes"); } catch (e) { /* asked again next visit */ }
+    $("ageGate").close();
+  };
+  $("ageNo").onclick = () => { location.href = "about:blank"; };
+  $("ageGate").showModal();
+}
 
 $("status").textContent = storageWarning;
 render();
