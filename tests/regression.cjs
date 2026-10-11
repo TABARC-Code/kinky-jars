@@ -14,8 +14,8 @@ function boot(saved = {}, options = {}) {
     return () => {};
   }, set: () => true });
   function element() {
-    return {
-      children: [], dataset: {}, style: { setProperty() {} }, hidden: false, disabled: false,
+    const el = {
+      children: [], classes: new Set(), classList: { toggle(name, on) { on ? this.owner.classes.add(name) : this.owner.classes.delete(name); } }, dataset: {}, style: { setProperty() {} }, hidden: false, disabled: false,
       value: '', textContent: '', listeners: {}, attrs: {}, nodes: {},
       setAttribute(k, v) { this.attrs[k] = String(v); }, removeAttribute(k) { delete this[k]; },
       appendChild(child) { this.children.push(child); },
@@ -28,6 +28,8 @@ function boot(saved = {}, options = {}) {
       close() { this.open = false; this.listeners.close?.(); },
       getBoundingClientRect() { return { left: 0, right: 500, top: 0, bottom: 500 }; }
     };
+    el.classList.owner = el;
+    return el;
   }
   const document = {
     getElementById: id => { if (!elements.has(id)) elements.set(id, element()); return elements.get(id); },
@@ -47,7 +49,7 @@ function boot(saved = {}, options = {}) {
     URL: { createObjectURL: () => { const url = 'blob:' + urls.length; urls.push(url); return url; }, revokeObjectURL: url => revoked.push(url) }
   };
   vm.createContext(sandbox); vm.runInContext(source, sandbox);
-  return { run: code => vm.runInContext(code, sandbox), elements, data, urls, revoked, frames, draws: () => draws };
+  return { document, run: code => vm.runInContext(code, sandbox), elements, data, urls, revoked, frames, draws: () => draws };
 }
 
 test('invalid saved fields fall back safely and ratings stay within range', () => {
@@ -149,4 +151,20 @@ test('poster footer reports how many jars are filled', () => {
   const app = boot({}, { texts });
   app.run('state.answers.dom = 3; state.answers.sub = 5; drawPoster(document.createElement("canvas"), 1);');
   assert.ok(texts.includes('2 of 28 jars filled'), texts.join(' | '));
+});
+
+test('easy-read font preference applies, persists on its own key, and survives Clear', () => {
+  const app = boot({ 'kinkjars-prefs': JSON.stringify({ easy: true }) });
+  assert.ok(app.document.documentElement.classes.has('easy'));
+  app.elements.get('easy').listeners.change({ target: { checked: false } });
+  assert.ok(!app.document.documentElement.classes.has('easy'));
+  assert.equal(JSON.parse(app.data.get('kinkjars-prefs')).easy, false);
+  app.elements.get('easy').listeners.change({ target: { checked: true } });
+  app.elements.get('reset').onclick();
+  assert.equal(JSON.parse(app.data.get('kinkjars-prefs')).easy, true);
+});
+
+test('a corrupt preference falls back to the standard font', () => {
+  const app = boot({ 'kinkjars-prefs': '{nope' });
+  assert.ok(!app.document.documentElement.classes.has('easy'));
 });

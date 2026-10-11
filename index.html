@@ -8,26 +8,34 @@
 <meta property="og:title" content="Kink Jars">
 <meta property="og:description" content="Fill your jars, pick your colour, save your picture.">
 <meta name="robots" content="noindex">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Permanent+Marker&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
-  :root{--c:#e63946;--on-c:#fff;--ink:#1d1a17;--bg:#fbf6ef;--card:#fff;--muted:#6b625a;--line:#e9e0d5}
+  @font-face{font-family:Oswald;font-style:normal;font-weight:500 700;font-display:swap;src:url(fonts/oswald.woff2) format("woff2")}
+  @font-face{font-family:Nunito;font-style:normal;font-weight:400 800;font-display:swap;src:url(fonts/nunito.woff2) format("woff2")}
+  @font-face{font-family:"Permanent Marker";font-style:normal;font-weight:400;font-display:swap;src:url(fonts/permanent-marker.woff2) format("woff2")}
+  @font-face{font-family:"Atkinson Hyperlegible";font-style:normal;font-weight:400;font-display:swap;src:url(fonts/atkinson-hyperlegible-400.woff2) format("woff2")}
+  @font-face{font-family:"Atkinson Hyperlegible";font-style:normal;font-weight:700;font-display:swap;src:url(fonts/atkinson-hyperlegible-700.woff2) format("woff2")}
+  :root{--c:#e63946;--on-c:#fff;--ink:#1d1a17;--bg:#fbf6ef;--card:#fff;--muted:#6b625a;--line:#e9e0d5;--head:Oswald,sans-serif;--body:Nunito,system-ui,sans-serif}
+  /* Easy-read mode: Atkinson Hyperlegible has distinct shapes for I, l, 1, b, d, p and q; spacing follows BDA advice. */
+  html.easy{--head:"Atkinson Hyperlegible",sans-serif;--body:"Atkinson Hyperlegible",system-ui,sans-serif}
+  html.easy body{letter-spacing:.03em;word-spacing:.12em;line-height:1.65}
+  html.easy .qlabel,html.easy h1,html.easy h2,html.easy .step{letter-spacing:.02em}
   *{box-sizing:border-box}
   [hidden]{display:none!important}
   html{-webkit-text-size-adjust:100%}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;font-size:18px;line-height:1.45;padding-bottom:110px}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.45;padding-bottom:110px}
   @media(min-width:960px){body{padding-bottom:40px}}
   .wrap{max-width:1180px;margin:0 auto;padding:28px 16px}
   header{margin-bottom:22px}
-  header h1{font-family:Oswald,sans-serif;font-weight:700;font-size:clamp(44px,9vw,68px);margin:0;line-height:1}
+  header h1{font-family:var(--head);font-weight:700;font-size:clamp(44px,9vw,68px);margin:0;line-height:1}
   header h1 span{color:var(--c);-webkit-text-stroke:2px var(--ink);paint-order:stroke fill}
   header p{margin:10px 0 0;color:var(--muted);max-width:640px}
-  .layout{display:grid;gap:24px}
+  .easy-toggle{display:inline-flex;align-items:center;gap:10px;margin-top:14px;font-weight:700;font-size:16px}
+  .easy-toggle input{width:22px;height:22px;accent-color:var(--ink)}
+  .layout{display:grid;gap:24px;grid-template-columns:minmax(0,1fr)}
   @media(min-width:960px){.layout{grid-template-columns:minmax(0,1fr) 430px}.side{position:sticky;top:20px;align-self:start}}
   .panel{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:20px;margin-bottom:20px}
-  .step{font-family:Oswald,sans-serif;font-weight:600;font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-  h2{font-family:Oswald,sans-serif;font-weight:600;font-size:27px;margin:2px 0 12px;line-height:1.15}
+  .step{font-family:var(--head);font-weight:600;font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  h2{font-family:var(--head);font-weight:600;font-size:27px;margin:2px 0 12px;line-height:1.15}
   .hint{color:var(--muted);font-size:16px;margin:-4px 0 14px}
   input[type=text]{font:inherit;font-size:20px;width:100%;padding:14px 16px;border:2px solid var(--line);border-radius:14px;background:#fff;color:var(--ink)}
   input[type=text]:focus{border-color:var(--ink);outline:none}
@@ -59,16 +67,16 @@
   .q:first-of-type{border-top:0}
   .q canvas{width:76px;height:124px}
   .qnum{font-size:14px;color:var(--muted);font-weight:700}
-  .qlabel{font-family:Oswald,sans-serif;font-weight:600;font-size:25px;line-height:1.1;margin:2px 0 10px}
+  .qlabel{font-family:var(--head);font-weight:600;font-size:25px;line-height:1.1;margin:2px 0 10px}
   .scale{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;max-width:380px}
-  .scale button{height:52px;border-radius:14px;border:2px solid var(--ink);background:#fff;font-family:Oswald,sans-serif;font-weight:600;font-size:22px;transition:transform .08s}
+  .scale button{height:52px;border-radius:14px;border:2px solid var(--ink);background:#fff;font-family:var(--head);font-weight:600;font-size:22px;transition:transform .08s}
   .scale button:active{transform:scale(.94)}
   .scale button[aria-pressed=true]{background:var(--c);color:var(--on-c);box-shadow:0 3px 0 var(--ink)}
   .ends{display:flex;justify-content:space-between;max-width:380px;font-size:13px;color:var(--muted);font-weight:700;margin-top:5px}
 
   /* poster + save */
   .poster{width:100%;height:auto;display:block;border-radius:12px;border:2px solid var(--line);background:#fff}
-  .big{display:block;width:100%;margin-top:16px;padding:18px 20px;border-radius:18px;border:3px solid var(--ink);background:var(--c);color:var(--on-c);font-family:Oswald,sans-serif;font-weight:700;font-size:26px;letter-spacing:.02em;box-shadow:0 5px 0 var(--ink)}
+  .big{display:block;width:100%;margin-top:16px;padding:18px 20px;border-radius:18px;border:3px solid var(--ink);background:var(--c);color:var(--on-c);font-family:var(--head);font-weight:700;font-size:26px;letter-spacing:.02em;box-shadow:0 5px 0 var(--ink)}
   .big:active{transform:translateY(3px);box-shadow:0 2px 0 var(--ink)}
   .small-links{display:flex;justify-content:space-between;gap:10px;margin-top:14px;font-size:15px;color:var(--muted)}
   .linkbtn{background:none;border:0;padding:4px 0;text-decoration:underline;color:var(--muted);font-size:15px}
@@ -83,7 +91,7 @@
   #modal::backdrop{background:rgba(20,16,12,.6)}
   button:disabled{cursor:wait;opacity:.7}
   .sheet{background:#fff;border-radius:22px;padding:20px;max-width:440px;width:100%;max-height:92vh;overflow:auto;text-align:center}
-  .sheet h3{font-family:Oswald,sans-serif;font-size:28px;margin:0 0 6px}
+  .sheet h3{font-family:var(--head);font-size:28px;margin:0 0 6px}
   .sheet p{margin:0 0 12px;color:var(--muted);font-size:16px}
   .sheet img{width:100%;border-radius:10px;border:2px solid var(--line)}
   .privacy{font-size:14px;color:var(--muted);text-align:center;margin-top:8px}
@@ -93,6 +101,7 @@
 <div class="wrap">
   <header>
     <h1>Fill your <span>jars</span></h1>
+    <label class="easy-toggle"><input type="checkbox" id="easy"> Easy-read font</label>
     <p>Pick a colour, rate each one from 1 (a little) to 5 (overflowing), then save your picture. Not your thing? Skip it and the jar stays empty. Adults only (18+).</p>
   </header>
 
@@ -141,7 +150,7 @@
         <h2>Your jars</h2>
         <canvas class="poster" id="poster" aria-label="Preview of your filled jars"></canvas>
         <button class="big" id="save" type="button">Save my jars</button>
-        <p id="status" role="status" aria-live="polite"></p><p class="privacy">Your name and answers are saved on this device. Google Fonts is contacted for typefaces; it receives no questionnaire answers from this app.</p><div class="small-links">
+        <p id="status" role="status" aria-live="polite"></p><p class="privacy">Your name and answers are saved on this device. The page loads its fonts from its own server and makes no requests to other sites.</p><div class="small-links">
           <span>Answers stay in this browser until you clear them or share an image.</span>
           <button class="linkbtn" id="reset" type="button">Clear saved answers</button>
         </div>
@@ -388,6 +397,11 @@ try {
   state = cleanState(JSON.parse(raw ?? localStorage.getItem(STORE) ?? "null"));
 } catch (e) {
   storageWarning = "Saved answers couldn't be read. You can still fill in and save an image.";
+}
+const STORE_PREFS = "kinkjars-prefs";
+function setEasy(on) {
+  document.documentElement.classList.toggle("easy", on);
+  $("easy").checked = on;
 }
 function persist() {
   try {
@@ -659,6 +673,11 @@ $("surprise").onclick = () => {
   const f = n => 255 * (l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1)));
   setColor(rgbToHex([f(0), f(8), f(4)]));
 };
+try { setEasy(JSON.parse(localStorage.getItem(STORE_PREFS) ?? "null")?.easy === true); } catch (e) { setEasy(false); }
+$("easy").addEventListener("change", e => {
+  setEasy(e.target.checked);
+  try { localStorage.setItem(STORE_PREFS, JSON.stringify({ easy: e.target.checked })); } catch (err) { /* preference just won't stick */ }
+});
 $("name").value = state.name;
 $("name").addEventListener("input", e => { state.name = e.target.value; persist(); update(); });
 
