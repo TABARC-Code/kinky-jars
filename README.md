@@ -16,6 +16,12 @@ Use **Save my jars** to prepare the image, then choose **Download PNG** or **Sha
 
 Tick **Easy-read font** at the top to switch the page to Atkinson Hyperlegible with looser letter and word spacing. Atkinson was designed so similar characters (I, l, 1, b, d, p, q) look different. I'm dyslexic myself and it helps me, but I won't claim a font fixes dyslexia; the research on that is mixed. The choice is stored under its own key, so **Clear saved answers** leaves it alone. The exported poster keeps its own typefaces.
 
+## Pride palettes
+
+Under the colour swatches there's a row of pride palettes: Rainbow, Progress, Trans, Bi, Pan, Ace and Non-binary. Pick one and each jar takes the next colour of the flag, so the poster comes out striped across the grid. Pick it again to switch it off. Choosing any single swatch, slider or hex code goes back to one colour. The palette is saved with your answers and kept through **Clear saved answers**.
+
+The hex values come from the flags' own SVG files on Wikimedia Commons (pan is from Wikipedia's table). White stripes are left white, so those jars read as pale glass with a coloured outline rather than coloured liquid. Other flags are easy to add: put a new entry in `PALETTES` with an `id`, a `name`, an `accent` colour for the buttons and a `colours` list.
+
 ## Not for me
 
 A jar can be empty because you skipped it or because it's a firm no. Those used to look identical. **Not for me** puts a cross on the jar, and rating a jar or pressing the button again clears it. It's saved beside your answers, and older saves load fine without it.

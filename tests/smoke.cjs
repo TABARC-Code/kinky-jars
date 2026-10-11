@@ -68,6 +68,20 @@ test('save produces a PNG and Escape returns focus', opts, () =>
     await page.waitForSelector('#modal[open]');
     assert.ok(await page.evaluate(() => document.getElementById('modalImg').naturalWidth) > 1000);
     await page.keyboard.press('Escape');
-    // The dialog's close event is queued, so wait for focus to land rather than reading it straight away.
+    // The dialogue's close event is queued, so wait for focus to land rather than reading it straight away.
     await page.waitForFunction(() => !document.getElementById('modal').open && document.activeElement.id === 'save', null, { timeout: 3000 });
+  }));
+
+test('picking a pride palette recolours the page, survives a reload, and a swatch drops it', opts, () =>
+  withPage(390, async (page, problems) => {
+    const trans = '.flag[data-id="trans"]';
+    // render() is batched on an animation frame, so wait for the attribute rather than reading it at once
+    await page.click(trans);
+    await page.waitForSelector(trans + '[aria-pressed="true"]');
+    await page.reload();
+    await page.waitForSelector(trans + '[aria-pressed="true"]');
+    await page.click('.sw');
+    await page.waitForSelector(trans + '[aria-pressed="false"]');
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 390);
+    assert.deepEqual(problems, []);
   }));

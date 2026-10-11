@@ -57,8 +57,31 @@ All five ideas from the list I'd drafted, plus an easy-read font:
 - **Easy-read font.** Atkinson Hyperlegible with extra letter and word spacing and taller lines, behind a toggle at the top. Its own storage key, kept through Clear. I picked it over Lexend because its character shapes are deliberately distinct, which is the thing that bites me; I haven't compared the two on other readers. Only the on-screen page changes. The exported poster still uses the original typefaces.
 - **Grid tweak.** With easy-read's extra spacing the page overflowed by 1px at 320px. `.layout` now uses `minmax(0,1fr)` for its column, which stops text widening the page.
 
+## 11 October 2026 — version numbers and pride palettes
+
+Added a `VERSION` constant and a short history comment at the top of the script, plus a "Version" line in the page's privacy text. The numbers are retrospective: 1.0.0 is the 8 October reliability pass, 1.1.0 is this morning's merge, 1.2.0 is this change. A test fails if `VERSION` and the newest line of the history comment disagree, because I'd forget otherwise.
+
+### Pride palettes
+
+Seven palettes: Rainbow, Progress, Trans, Bi, Pan, Ace, Non-binary. Each jar uses `colours[i % colours.length]`, so the flag runs across the grid in reading order. `state.palette` is an ID or null. A single colour (swatch, slider, hex, Surprise me) sets it back to null, otherwise the swatches would appear to do nothing. Picking a palette also sets `state.color` to the palette's `accent`, which the buttons and sliders use. Clear keeps the palette, the same way it keeps the colour. Unknown IDs on load fall back to null.
+
+Where the hex values came from, because I'd rather say than imply:
+
+- Rainbow and Progress: the fills in Wikimedia's "LGBTQ+ rainbow flag Quasar 'Progress' variant" SVG. I read that through a page-summarising fetch, not by downloading the file, so it's one step removed.
+- Trans, Bi, Ace and Non-binary: fills in the Wikimedia SVG files, downloaded and read directly. Ace's purple is the CSS name `purple`, which is #800080.
+- Pan: Wikipedia's hex table, which cites a 2010 Tumblr post. Its SVG wouldn't download (rate limited, then wrong filename).
+- Wikimedia's plain six-stripe "Gay Pride Flag" file uses slightly different values from the Progress file (#E50000 against #E40303, and so on). I used the Progress set for both.
+- Not added: the lesbian (sunset) flag. I couldn't find hex values I could verify, and I'd rather leave it out than guess.
+
+White jars stay white. They read as pale glass with the ink outline, which looks fine on the poster, but a white liquid on a white page is subtle. Easy to nudge to a faint grey if it bothers anyone.
+
+Checked in real Chromium: Progress and Ace posters, and the picker on a 390px screen. Both suites pass, and the new smoke check ran three times in a row without flaking. It waits for the attribute, because `render()` is batched on an animation frame. My first version read it straight away and failed.
+
+Still not checked: real phones, Safari and the share sheet.
+
 ### Ideas, not built
 
+- More flags (lesbian, intersex, genderqueer, and so on) once I can verify their colours.
 - Compare mode: load two exports side by side and highlight overlaps. Needs a way to read a poster back, so probably a small encoded payload in the PNG metadata.
 - Throttle `persist()` on slider drags. Harmless at this size; I'd want a measurement before touching it.
 - Option to apply the easy-read font to the exported poster as well.

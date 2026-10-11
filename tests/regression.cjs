@@ -219,3 +219,49 @@ test('age gate still works when storage is blocked', () => {
   app.elements.get('ageYes').onclick();
   assert.equal(app.elements.get('ageGate').open, false);
 });
+
+test('palette ids are validated and an unknown one falls back to a single colour', () => {
+  assert.equal(boot({ 'kinkyjars-v2': JSON.stringify({ palette: 'trans' }) }).run('state.palette'), 'trans');
+  assert.equal(boot({ 'kinkyjars-v2': JSON.stringify({ palette: 'nope' }) }).run('state.palette'), null);
+  assert.equal(boot({ 'kinkyjars-v2': JSON.stringify({ palette: 7 }) }).run('state.palette'), null);
+});
+
+test('every palette uses valid hex colours and a usable accent', () => {
+  const app = boot();
+  const palettes = JSON.parse(app.run('JSON.stringify(PALETTES)'));
+  assert.ok(palettes.length >= 7);
+  assert.equal(new Set(palettes.map(p => p.id)).size, palettes.length);
+  for (const p of palettes) {
+    assert.match(p.accent, /^#[0-9a-f]{6}$/);
+    assert.ok(p.colours.length >= 3, p.id);
+    for (const c of p.colours) assert.match(c, /^#[0-9a-f]{6}$/, p.id);
+  }
+});
+
+test('jars cycle through the palette; a single colour still works', () => {
+  const app = boot();
+  app.run('setPalette("bi")');
+  assert.equal(app.run('state.palette'), 'bi');
+  assert.equal(app.run('state.color'), '#d60270');
+  assert.deepEqual(JSON.parse(app.run('JSON.stringify([0, 1, 2, 3, 4].map(jarRgb))')), [[214, 2, 112], [155, 79, 150], [0, 56, 168], [214, 2, 112], [155, 79, 150]]);
+  app.run('setColor("#112233")');
+  assert.equal(app.run('state.palette'), null);
+  assert.deepEqual(JSON.parse(app.run('JSON.stringify(jarRgb(5))')), [17, 34, 51]);
+});
+
+test('choosing the same palette again switches it off, and Clear keeps the palette', () => {
+  const app = boot();
+  const btn = app.elements.get('pride').children.find(b => b.dataset.id === 'pan');
+  btn.onclick();
+  assert.equal(app.run('state.palette'), 'pan');
+  app.elements.get('reset').onclick();
+  assert.equal(app.run('state.palette'), 'pan');
+  btn.onclick();
+  assert.equal(app.run('state.palette'), null);
+});
+
+test('the version constant matches the newest line of the history comment', () => {
+  const head = fs.readFileSync(require('node:path').join(__dirname, '../index.html'), 'utf8').split('<script>')[1].split('*/')[0];
+  const newest = head.match(/^\s+(\d+\.\d+\.\d+)\s/m)[1];
+  assert.equal(boot().run('VERSION'), newest);
+});
