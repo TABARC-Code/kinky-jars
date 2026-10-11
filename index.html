@@ -394,8 +394,8 @@ const QUESTIONS = [
 const JARS = QUESTIONS.map(question => question.label);
 const PRESETS = ["#e63946","#ff5d8f","#ff8c42","#ffd23f","#7bd389","#2ec4b6","#3a86ff","#5b2a86","#c77dff","#8d1d3a","#8d5524","#2b2d42"];
 /* Pride palettes. Jar i takes colours[i % colours.length]; accent is what the buttons and sliders use.
-   Hex values are from the flags' own SVG files on Wikimedia Commons, except pan, which is the
-   Wikipedia table (itself citing the 2010 Tumblr post). White stripes stay white on purpose. */
+   Every hex value is a fill read straight out of the flag's SVG on Wikimedia Commons. Intersex is
+   yellow with a purple ring, so its jars simply alternate. White stripes stay white on purpose. */
 const PALETTES = [
   { id: "rainbow", name: "Rainbow", accent: "#e40303", colours: ["#e40303", "#ff8c00", "#ffed00", "#008026", "#004dff", "#750787"] },
   { id: "progress", name: "Progress", accent: "#e40303", colours: ["#e40303", "#ff8c00", "#ffed00", "#008026", "#004dff", "#750787", "#000000", "#613915", "#74d7ee", "#ffafc8", "#ffffff"] },
@@ -403,7 +403,11 @@ const PALETTES = [
   { id: "bi", name: "Bi", accent: "#d60270", colours: ["#d60270", "#9b4f96", "#0038a8"] },
   { id: "pan", name: "Pan", accent: "#ff218c", colours: ["#ff218c", "#ffd800", "#21b1ff"] },
   { id: "ace", name: "Ace", accent: "#800080", colours: ["#000000", "#a3a3a3", "#ffffff", "#800080"] },
-  { id: "nonbinary", name: "Non-binary", accent: "#9c59d0", colours: ["#fff433", "#ffffff", "#9c59d0", "#2d2d2d"] }
+  { id: "nonbinary", name: "Non-binary", accent: "#9c59d0", colours: ["#fff433", "#ffffff", "#9c59d0", "#2d2d2d"] },
+  { id: "lesbian", name: "Lesbian", accent: "#d52d00", colours: ["#d52d00", "#ef7627", "#ff9a56", "#ffffff", "#d162a4", "#b55690", "#a30262"] },
+  { id: "intersex", name: "Intersex", accent: "#7902aa", colours: ["#ffd800", "#7902aa"] },
+  { id: "genderqueer", name: "Genderqueer", accent: "#b57edc", colours: ["#b57edc", "#ffffff", "#4a8123"] },
+  { id: "aromantic", name: "Aromantic", accent: "#3da542", colours: ["#3da542", "#a7d379", "#ffffff", "#a9a9a9", "#000000"] }
 ];
 const COLS = 7, INK = "#151311", PW = 1200;
 const ROWS = Math.ceil(JARS.length / COLS);

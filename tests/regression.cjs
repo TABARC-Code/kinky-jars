@@ -229,11 +229,11 @@ test('palette ids are validated and an unknown one falls back to a single colour
 test('every palette uses valid hex colours and a usable accent', () => {
   const app = boot();
   const palettes = JSON.parse(app.run('JSON.stringify(PALETTES)'));
-  assert.ok(palettes.length >= 7);
+  assert.ok(palettes.length >= 11);
   assert.equal(new Set(palettes.map(p => p.id)).size, palettes.length);
   for (const p of palettes) {
     assert.match(p.accent, /^#[0-9a-f]{6}$/);
-    assert.ok(p.colours.length >= 3, p.id);
+    assert.ok(p.colours.length >= 2, p.id);
     for (const c of p.colours) assert.match(c, /^#[0-9a-f]{6}$/, p.id);
   }
 });
