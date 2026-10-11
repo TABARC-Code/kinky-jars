@@ -55,6 +55,12 @@
   input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:26px;border-radius:13px;border:2px solid var(--ink);margin:0;background:#ccc}
   input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;border-radius:50%;background:#fff;border:3px solid var(--ink);box-shadow:0 2px 4px rgba(0,0,0,.25)}
   input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid var(--ink)}
+  .pride{margin-top:16px;max-width:420px}
+  .pride-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .flag{display:inline-flex;align-items:center;gap:8px;background:#fff;border:2px solid var(--ink);border-radius:999px;padding:5px 12px 5px 6px;font-weight:700;font-size:15px}
+  .flag[aria-pressed=true]{background:var(--ink);color:#fff}
+  .stripes{width:26px;height:20px;border-radius:5px;border:2px solid var(--ink);background-clip:padding-box}
+  .flag[aria-pressed=true] .stripes{border-color:#fff}
   .hexrow{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
   .hexrow input{width:130px;font-size:18px;padding:10px 12px;font-family:ui-monospace,Menlo,monospace;text-transform:uppercase}
   .ghost{background:#fff;border:2px solid var(--ink);border-radius:999px;padding:9px 16px;font-weight:700;font-size:16px}
@@ -122,6 +128,10 @@
         <div class="picker">
           <div>
             <div class="swatches" id="swatches" role="group" aria-label="Colour choices"></div>
+            <div class="pride" role="group" aria-labelledby="prideLabel">
+              <div class="step" id="prideLabel">Pride palettes</div>
+              <div class="pride-list" id="pride"></div>
+            </div>
             <div class="sliders">
               <label class="sl">Red<input type="range" id="r" min="0" max="255"><output id="rv"></output></label>
               <label class="sl">Green<input type="range" id="g" min="0" max="255"><output id="gv"></output></label>
@@ -152,7 +162,7 @@
         <h2>Your jars</h2>
         <canvas class="poster" id="poster" aria-label="Preview of your filled jars"></canvas>
         <button class="big" id="save" type="button">Save my jars</button>
-        <p id="status" role="status" aria-live="polite"></p><p class="privacy">Your name and answers are saved on this device. The page loads its fonts from its own server and makes no requests to other sites.</p><div class="small-links">
+        <p id="status" role="status" aria-live="polite"></p><p class="privacy">Your name and answers are saved on this device. The page loads its fonts from its own server and makes no requests to other sites. <span class="ver">Version <span id="ver"></span>.</span></p><div class="small-links">
           <span>Answers stay in this browser until you clear them or share an image.</span>
           <button class="linkbtn" id="reset" type="button">Clear saved answers</button>
         </div>
@@ -184,6 +194,11 @@
 </dialog>
 
 <script>
+/* Kinky Jars. Version history, newest first. Short notes so future me knows why it is the way it is.
+   1.2.0  Pride palettes: each jar takes the next colour of a flag. Hex values checked against Wikimedia and Wikipedia (see NOTES.md).
+   1.1.0  "Not for me" flag, easy-read font, 18+ gate, fonts bundled, CI and browser smoke tests.
+   1.0.0  First proper tidy: validated storage, answers keyed by ID, save and share reworked. */
+const VERSION = "1.2.0";
 /* Keep each ID with its label when moving questions. IDs are saved; wording can change. */
 const QUESTIONS = [
   {
@@ -378,6 +393,18 @@ const QUESTIONS = [
 ];
 const JARS = QUESTIONS.map(question => question.label);
 const PRESETS = ["#e63946","#ff5d8f","#ff8c42","#ffd23f","#7bd389","#2ec4b6","#3a86ff","#5b2a86","#c77dff","#8d1d3a","#8d5524","#2b2d42"];
+/* Pride palettes. Jar i takes colours[i % colours.length]; accent is what the buttons and sliders use.
+   Hex values are from the flags' own SVG files on Wikimedia Commons, except pan, which is the
+   Wikipedia table (itself citing the 2010 Tumblr post). White stripes stay white on purpose. */
+const PALETTES = [
+  { id: "rainbow", name: "Rainbow", accent: "#e40303", colours: ["#e40303", "#ff8c00", "#ffed00", "#008026", "#004dff", "#750787"] },
+  { id: "progress", name: "Progress", accent: "#e40303", colours: ["#e40303", "#ff8c00", "#ffed00", "#008026", "#004dff", "#750787", "#000000", "#613915", "#74d7ee", "#ffafc8", "#ffffff"] },
+  { id: "trans", name: "Trans", accent: "#5bcefa", colours: ["#5bcefa", "#f5a9b8", "#ffffff", "#f5a9b8", "#5bcefa"] },
+  { id: "bi", name: "Bi", accent: "#d60270", colours: ["#d60270", "#9b4f96", "#0038a8"] },
+  { id: "pan", name: "Pan", accent: "#ff218c", colours: ["#ff218c", "#ffd800", "#21b1ff"] },
+  { id: "ace", name: "Ace", accent: "#800080", colours: ["#000000", "#a3a3a3", "#ffffff", "#800080"] },
+  { id: "nonbinary", name: "Non-binary", accent: "#9c59d0", colours: ["#fff433", "#ffffff", "#9c59d0", "#2d2d2d"] }
+];
 const COLS = 7, INK = "#151311", PW = 1200;
 const ROWS = Math.ceil(JARS.length / COLS);
 const PH = 260 + (ROWS - 1) * 345 + 360;
@@ -399,7 +426,9 @@ function cleanState(saved) {
   if (source.no && typeof source.no === "object" && !Array.isArray(source.no)) {
     for (const { id } of QUESTIONS) if (source.no[id] === true && answers[id] === 0) no[id] = true;
   }
+  const palette = PALETTES.some(p => p.id === source.palette) ? source.palette : null;
   return {
+    palette,
     name: typeof source.name === "string" ? source.name.slice(0, 24) : "",
     color: typeof source.color === "string" && /^#[0-9a-f]{6}$/i.test(source.color) ? source.color.toLowerCase() : "#e63946",
     answers,
@@ -435,6 +464,11 @@ const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
 const css = (a, al = 1) => `rgba(${a.map(Math.round).join(",")},${al})`;
 const lighten = (a, t) => css(mix(a, [255, 255, 255], t));
 const darken = (a, t) => css(mix(a, [0, 0, 0], t));
+const currentPalette = () => PALETTES.find(p => p.id === state.palette) || null;
+function jarRgb(i) {
+  const p = currentPalette();
+  return hexToRgb(p ? p.colours[i % p.colours.length] : state.color);
+}
 function luminance(rgb) {
   const linear = rgb.map(v => { v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; });
   return linear[0] * .2126 + linear[1] * .7152 + linear[2] * .0722;
@@ -615,7 +649,6 @@ function drawJar(c, idx, level, rgb, notForMe = false) {
 
 /* ===== poster ===== */
 function drawPoster(canvas, scale) {
-  const rgb = hexToRgb(state.color);
   canvas.width = PW * scale; canvas.height = PH * scale;
   const c = canvas.getContext("2d");
   c.setTransform(scale, 0, 0, scale, 0, 0);
@@ -643,7 +676,7 @@ function drawPoster(canvas, scale) {
   JARS.forEach((label, i) => {
     const col = i % COLS, row = Math.floor(i / COLS);
     const cx = PW / 2 + (col - (COLS - 1) / 2) * 150, top = 260 + row * 345;
-    c.save(); c.translate(cx - 48, top); drawJar(c, i, state.answers[QUESTIONS[i].id], rgb, !!state.no[QUESTIONS[i].id]); c.restore();
+    c.save(); c.translate(cx - 48, top); drawJar(c, i, state.answers[QUESTIONS[i].id], jarRgb(i), !!state.no[QUESTIONS[i].id]); c.restore();
     let size = 30; c.font = `600 ${size}px Oswald, 'Arial Narrow', sans-serif`;
     while (label.some(l => c.measureText(l).width > 140) && size > 18) { size--; c.font = `600 ${size}px Oswald, 'Arial Narrow', sans-serif`; }
     c.fillStyle = INK; c.textAlign = "center";
@@ -686,6 +719,17 @@ PRESETS.forEach(hex => {
   b.dataset.hex = hex; b.setAttribute("aria-label", "Colour " + hex);
   b.onclick = () => setColor(hex); sw.appendChild(b);
 });
+const prideList = $("pride");
+PALETTES.forEach(pal => {
+  const b = document.createElement("button"); b.type = "button"; b.className = "flag"; b.dataset.id = pal.id;
+  const n = pal.colours.length, stops = pal.colours.map((c, k) => `${c} ${k / n * 100}% ${(k + 1) / n * 100}%`).join(",");
+  const chip = document.createElement("span"); chip.className = "stripes"; chip.style.background = `linear-gradient(to bottom,${stops})`;
+  const label = document.createElement("span"); label.textContent = pal.name;
+  b.appendChild(chip); b.appendChild(label);
+  b.setAttribute("aria-label", `${pal.name} pride palette`);
+  b.onclick = () => setPalette(state.palette === pal.id ? null : pal.id);
+  prideList.appendChild(b);
+});
 ["r", "g", "b"].forEach((k, n) => $(k).addEventListener("input", () => {
   const a = hexToRgb(state.color); a[n] = +$(k).value; setColor(rgbToHex(a));
 }));
@@ -704,10 +748,17 @@ $("easy").addEventListener("change", e => {
   setEasy(e.target.checked);
   try { localStorage.setItem(STORE_PREFS, JSON.stringify({ easy: e.target.checked })); } catch (err) { /* preference just won't stick */ }
 });
+$("ver").textContent = VERSION;
 $("name").value = state.name;
 $("name").addEventListener("input", e => { state.name = e.target.value; persist(); update(); });
 
-function setColor(hex, fromHexBox) { state.color = hex.toLowerCase(); persist(); if (!fromHexBox) $("hex").value = state.color.toUpperCase(); update(); }
+function setPalette(id) {
+  state.palette = id;
+  if (id) state.color = currentPalette().accent;
+  persist(); $("hex").value = state.color.toUpperCase(); update();
+}
+// Picking any single colour drops the palette. Otherwise the swatches would seem to do nothing.
+function setColor(hex, fromHexBox) { state.color = hex.toLowerCase(); state.palette = null; persist(); if (!fromHexBox) $("hex").value = state.color.toUpperCase(); update(); }
 
 let queued = false;
 let lastColour = null;
@@ -722,18 +773,20 @@ function render() {
     $(k).style.background = `linear-gradient(to right, ${css(lo)}, ${css(hi)})`;
   });
   if (document.activeElement !== $("hex")) $("hex").value = state.color.toUpperCase();
-  [...sw.children].forEach(b => b.setAttribute("aria-pressed", b.dataset.hex === state.color));
-  if (lastColour !== state.color) {
-  drawMini($("pv1"), 3, 2, rgb); drawMini($("pv2"), 9, 4, rgb); drawMini($("pv3"), 2, 5, rgb);
+  [...sw.children].forEach(b => b.setAttribute("aria-pressed", !state.palette && b.dataset.hex === state.color));
+  [...prideList.children].forEach(b => b.setAttribute("aria-pressed", b.dataset.id === state.palette));
+  const colourKey = state.color + "|" + (state.palette || "");
+  if (lastColour !== colourKey) {
+    drawMini($("pv1"), 3, 2, jarRgb(0)); drawMini($("pv2"), 9, 4, jarRgb(1)); drawMini($("pv3"), 2, 5, jarRgb(2));
   }
   minis.forEach((m, i) => {
     const id = QUESTIONS[i].id, answer = state.answers[id], no = !!state.no[id], key = no ? "no" : answer;
-    if (lastColour !== state.color || lastAnswers.get(i) !== key) drawMini(m.canvas, i, answer, rgb, no);
+    if (lastColour !== colourKey || lastAnswers.get(i) !== key) drawMini(m.canvas, i, answer, jarRgb(i), no);
     lastAnswers.set(i, key);
     m.nope.setAttribute("aria-pressed", no);
     m.buttons.forEach((b, k) => b.setAttribute("aria-pressed", state.answers[QUESTIONS[i].id] === k + 1));
   });
-  lastColour = state.color;
+  lastColour = colourKey;
   const n = Object.values(state.answers).filter(Boolean).length;
   const skipped = Object.keys(state.no).length;
   $("progress").textContent = `${n} of ${JARS.length} filled` + (skipped ? `, ${skipped} not for me` : "");
@@ -811,7 +864,7 @@ $("modal").addEventListener("close", () => {
 addEventListener("pagehide", releasePreview);
 $("reset").onclick = () => {
   if (!confirm("Clear your name and all saved answers from this browser?")) return;
-  state = cleanState({ color: state.color });
+  state = cleanState({ color: state.color, palette: state.palette });
   $("name").value = "";
   try {
     localStorage.removeItem(STORE);
