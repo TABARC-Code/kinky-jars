@@ -32,7 +32,9 @@
   .easy-toggle{display:inline-flex;align-items:center;gap:10px;margin-top:14px;font-weight:700;font-size:16px}
   .easy-toggle input{width:22px;height:22px;accent-color:var(--ink)}
   .layout{display:grid;gap:24px;grid-template-columns:minmax(0,1fr)}
-  @media(min-width:960px){.layout{grid-template-columns:minmax(0,1fr) 430px}.side{position:sticky;top:20px;align-self:start}}
+  @media(min-width:960px){.layout{grid-template-columns:minmax(0,1fr) 430px}.side{align-self:start}}
+  /* Only stick the poster when the whole panel fits; on shorter screens it scrolls like everything else. */
+  @media(min-width:960px) and (min-height:900px){.side{position:sticky;top:20px}}
   .panel{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:20px;margin-bottom:20px}
   .step{font-family:var(--head);font-weight:600;font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
   h2{font-family:var(--head);font-weight:600;font-size:27px;margin:2px 0 12px;line-height:1.15}
@@ -102,6 +104,7 @@
   .sheet h3{font-family:var(--head);font-size:28px;margin:0 0 6px}
   .sheet p{margin:0 0 12px;color:var(--muted);font-size:16px}
   .sheet img{width:100%;border-radius:10px;border:2px solid var(--line)}
+  @media(min-width:960px){.cmp{max-width:calc(100% - 454px)}}
   .cmp input[type=text]{font-size:16px;padding:10px 12px;margin:6px 0 10px;font-family:ui-monospace,Menlo,monospace}
   .cmp-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
   .cmp-list{list-style:none;padding:0;margin:12px 0 0}
@@ -174,19 +177,19 @@
           <button class="linkbtn" id="reset" type="button">Clear saved answers</button>
         </div>
       </section>
-      <section class="panel cmp" id="compare">
-        <div class="step">Optional</div>
-        <h2>Compare with someone</h2>
-        <p class="hint">Swap codes with a partner. The page only lists the jars you're both into. A code does contain all your answers, though, so only give it to someone you trust.</p>
-        <div class="cmp-row"><button class="ghost" id="copyCode" type="button">Copy my code</button></div>
-        <input type="text" id="myCode" readonly hidden aria-label="Your code" spellcheck="false">
-        <label for="theirCode" style="display:block;margin-top:12px;font-weight:700;font-size:16px">Their code</label>
-        <input type="text" id="theirCode" placeholder="Paste their code here" autocomplete="off" spellcheck="false">
-        <div class="cmp-row"><button class="ghost" id="compareBtn" type="button">Compare</button></div>
-        <div id="compareResult" aria-live="polite"></div>
-      </section>
     </aside>
   </div>
+  <section class="panel cmp" id="compare">
+    <div class="step">Optional</div>
+    <h2>Compare with someone</h2>
+    <p class="hint">Swap codes with a partner. The page only lists the jars you're both into. A code does contain all your answers, though, so only give it to someone you trust.</p>
+    <div class="cmp-row"><button class="ghost" id="copyCode" type="button">Copy my code</button></div>
+    <input type="text" id="myCode" readonly hidden aria-label="Your code" spellcheck="false">
+    <label for="theirCode" style="display:block;margin-top:12px;font-weight:700;font-size:16px">Their code</label>
+    <input type="text" id="theirCode" placeholder="Paste their code here" autocomplete="off" spellcheck="false">
+    <div class="cmp-row"><button class="ghost" id="compareBtn" type="button">Compare</button></div>
+    <div id="compareResult" aria-live="polite"></div>
+  </section>
 </div>
 
 <div class="bar"><div class="bar-in"><span id="progress">0 of 28 filled</span><button class="big" id="saveBar" type="button">Save my jars</button></div></div>
@@ -213,11 +216,12 @@
 
 <script>
 /* Kinky Jars. Version history, newest first. Short notes so future me knows why it is the way it is.
+   1.3.1  Review fixes: compare out of the sticky column, sticky only on tall screens, honest compare counts, font licences bundled.
    1.3.0  Compare codes (only mutual jars shown), four more flags, poster follows easy-read.
    1.2.0  Pride palettes: each jar takes the next colour of a flag. Hex values checked against Wikimedia and Wikipedia (see NOTES.md).
    1.1.0  "Not for me" flag, easy-read font, 18+ gate, fonts bundled, CI and browser smoke tests.
    1.0.0  First proper tidy: validated storage, answers keyed by ID, save and share reworked. */
-const VERSION = "1.3.0";
+const VERSION = "1.3.1";
 /* Keep each ID with its label when moving questions. IDs are saved; wording can change. */
 const QUESTIONS = [
   {
@@ -928,14 +932,14 @@ function decodeCode(code) {
     return cleanState({ name: raw.n, answers: raw.a, no });
   } catch (e) { return null; }
 }
-// Only mutual jars are listed. The rest are counted, never shown: talk about those in person.
+// Only mutual jars are listed. Jars on just one list are counted, never named; no's aren't counted at all.
 function compareWith(theirs) {
   const both = [];
   let other = 0;
   QUESTIONS.forEach(({ id, label }) => {
     const mine = state.answers[id], them = theirs.answers[id];
     if (mine > 0 && them > 0) both.push({ text: label.join(" "), mine, them });
-    else if (mine > 0 || them > 0 || state.no[id] || theirs.no[id]) other++;
+    else if (mine > 0 || them > 0) other++;
   });
   both.sort((x, y) => Math.min(y.mine, y.them) - Math.min(x.mine, x.them) || (y.mine + y.them) - (x.mine + x.them));
   return { both, other };
@@ -956,8 +960,8 @@ $("compareBtn").onclick = () => {
   out.textContent = "";
   const theirs = decodeCode($("theirCode").value);
   const note = document.createElement("p"); note.className = "cmp-note";
-  if (!theirs) { note.textContent = "That doesn't look like a Kinky Jars code. Check it was copied in full."; out.appendChild(note); return; }
-  const who = theirs.name.trim() || "Them";
+  if (!theirs) { note.textContent = "That doesn't look like a Kink Jars code. Check it was copied in full."; out.appendChild(note); return; }
+  const who = theirs.name.trim() || "them";
   const { both, other } = compareWith(theirs);
   const list = document.createElement("ul"); list.className = "cmp-list";
   for (const row of both) {
@@ -966,7 +970,7 @@ $("compareBtn").onclick = () => {
     const v = document.createElement("span"); v.textContent = `you ${row.mine}, ${who} ${row.them}`;
     li.appendChild(t); li.appendChild(v); list.appendChild(li);
   }
-  note.textContent = (both.length ? `You're both into ${both.length} of these.` : "No jars in common yet.") + (other ? ` ${other} more didn't match; talk about those in person if you want to.` : "");
+  note.textContent = (both.length ? `You're both into ${both.length} of these.` : "No jars in common yet.") + (other ? ` ${other} more are on only one of your lists; talk about those in person if you want to.` : "");
   out.appendChild(note);
   if (both.length) out.appendChild(list);
 };

@@ -54,7 +54,7 @@ All five ideas from the list I'd drafted, plus an easy-read font:
 - **Not for me.** Stored as a separate `no` map rather than a sentinel value such as -1 in `answers`, so rating validation, the legacy array migration and the old tests didn't have to change. It is dropped on load if the jar also has a rating, and unknown IDs are ignored. Drawn as a cross on the jar.
 - **Age gate.** A modal on the first visit; Escape is blocked, "Leave" goes to a blank page, and a yes is remembered under `kinkjars-18`. It's a self-declaration. It stays in storage after Clear because it isn't personal data. If storage is blocked it asks every visit.
 - **Fonts bundled.** Oswald, Nunito and Permanent Marker, plus Atkinson Hyperlegible, now live in `fonts/` (about 125KB of Latin subsets). Oswald and Nunito are variable, so one file each covers every weight. The page makes zero outside requests, and the privacy line says so. I haven't verified the licence texts upstream; see `fonts/LICENCES.md`.
-- **Easy-read font.** Atkinson Hyperlegible with extra letter and word spacing and taller lines, behind a toggle at the top. Its own storage key, kept through Clear. I picked it over Lexend because its character shapes are deliberately distinct, which is the thing that bites me; I haven't compared the two on other readers. Only the on-screen page changes. The exported poster still uses the original typefaces.
+- **Easy-read font.** Atkinson Hyperlegible with extra letter and word spacing and taller lines, behind a toggle at the top. Its own storage key, kept through Clear. I picked it over Lexend because its character shapes are deliberately distinct (I, l, 1, b, d, p, q); I haven't compared the two with real readers. Only the on-screen page changes. The exported poster still uses the original typefaces.
 - **Grid tweak.** With easy-read's extra spacing the page overflowed by 1px at 320px. `.layout` now uses `minmax(0,1fr)` for its column, which stops text widening the page.
 
 ## 11 October 2026 — version numbers and pride palettes
@@ -90,6 +90,19 @@ Still not checked: real phones, Safari and the share sheet.
 **Measured, then left alone.** Save on every slider move costs about 0.007ms (0.03ms with the CPU throttled 4x in Chromium). A full render is about 2ms (7ms throttled), which is inside a frame. Throttling `persist()` would be code for nothing, so it's struck off the list.
 
 **CI.** `actions/checkout` and `actions/setup-node` bumped to v5, which drops the Node 20 deprecation warning.
+
+## 11 October 2026, review pass — 1.3.1
+
+Read the whole script and the docs again before merging 1.3.0, and found these:
+
+- **Compare hidden on desktop.** The compare panel lived in the sticky side column, which made that column 1298px tall. While you scrolled, the bottom of it never came into view. On an 800px-tall screen even "Clear saved answers" was cut off, which was older than compare. Compare now sits below the two columns, the same width as the questions, and the side column only sticks when the window is at least 900px tall. There's a smoke test for both heights.
+- **Compare counted the wrong things.** "N more didn't match" also counted jars where either of you had said Not for me, so the count quietly hinted at no's. Now it counts only jars on exactly one list, and the wording says that.
+- **Wording.** "Them" with a capital in the middle of "you 4, Them 5" is now "them". The error message said "Kinky Jars code" while the page calls itself Kink Jars.
+- **Docs.** The README said Clear only keeps your colour; it keeps the palette and the easy-read setting too. CI runs on pull requests and on `main`, not every push. I also took out a line that read as the author describing their own reading, which wasn't mine to publish.
+
+- **Font licences, wrong.** I'd written that all four families were "believed OFL". I checked the `google/fonts` repository: Oswald, Nunito and Atkinson Hyperlegible are OFL 1.1, but Permanent Marker is Apache 2.0. The four licence texts are now bundled in `fonts/licences/` and `fonts/LICENCES.md` says what's what.
+
+29 logic and 15 browser checks pass.
 
 ### Ideas, not built
 

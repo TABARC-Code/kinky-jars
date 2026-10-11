@@ -310,7 +310,8 @@ test('compare lists only mutual jars and counts the rest without naming them', (
   assert.deepEqual(rows, ['being a dom | you 5, Sam 3', 'being a sub | you 2, Sam 5']);
   const note = out.find(el => el.className === 'cmp-note').textContent;
   assert.match(note, /both into 2/);
-  assert.match(note, /3 more didn't match/);
+  // dom and sub are on both lists; feet is mine only, anal theirs only. spit (my no) isn't counted at all.
+  assert.match(note, /2 more are on only one of your lists/);
   assert.doesNotMatch(note, /anal|feet|spit/);
 });
 
@@ -321,4 +322,14 @@ test('a broken code shows a message instead of a list', () => {
   const out = app.elements.get('compareResult').children;
   assert.equal(out.length, 1);
   assert.match(out[0].textContent, /doesn't look like/);
+});
+
+test('with no name in their code, the list says "them" in lower case', () => {
+  const app = boot();
+  app.run('state.answers.dom = 2;');
+  const theirs = 'KJ1.' + Buffer.from(JSON.stringify({ n: '', a: { dom: 4 } })).toString('base64url');
+  app.run(`$("theirCode").value = ${JSON.stringify(theirs)}`);
+  app.elements.get('compareBtn').onclick();
+  const list = app.elements.get('compareResult').children.find(el => el.className === 'cmp-list');
+  assert.equal(list.children[0].children[1].textContent, 'you 2, them 4');
 });
