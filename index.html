@@ -448,7 +448,11 @@ try {
   storageWarning = "Saved answers couldn't be read. You can still fill in and save an image.";
 }
 const STORE_PREFS = "kinkjars-prefs";
+let easyRead = false;
+// The poster's small print follows the easy-read setting too; title and name keep their character.
+const smallFont = (weight, size) => easyRead ? `700 ${size}px "Atkinson Hyperlegible", sans-serif` : `${weight} ${size}px Oswald, 'Arial Narrow', sans-serif`;
 function setEasy(on) {
+  easyRead = on;
   document.documentElement.classList.toggle("easy", on);
   $("easy").checked = on;
 }
@@ -669,11 +673,11 @@ function drawPoster(canvas, scale) {
     while (c.measureText(name).width > lineW - 12 && size > 20) { size -= 2; c.font = `${size}px "Permanent Marker", "Comic Sans MS", cursive`; }
     c.textAlign = "center"; c.fillText(name, x0 + lineW / 2, base - 18);
   }
-  c.textAlign = "center"; c.font = "500 30px Oswald, 'Arial Narrow', sans-serif"; c.fillStyle = "#555";
+  c.textAlign = "center"; c.font = smallFont(500, 30); c.fillStyle = "#555";
   c.fillText("(1 = a little  ·  5 = overflowing  ·  X = not for me)", PW / 2, 200);
 
   const filled = Object.values(state.answers).filter(Boolean).length;
-  c.fillStyle = "#555"; c.textAlign = "center"; c.font = "500 26px Oswald, 'Arial Narrow', sans-serif";
+  c.fillStyle = "#555"; c.textAlign = "center"; c.font = smallFont(500, 26);
   const skipped = Object.keys(state.no).length;
   c.fillText(`${filled} of ${JARS.length} jars filled` + (skipped ? ` · ${skipped} not for me` : ""), PW / 2, PH - 16);
 
@@ -681,8 +685,8 @@ function drawPoster(canvas, scale) {
     const col = i % COLS, row = Math.floor(i / COLS);
     const cx = PW / 2 + (col - (COLS - 1) / 2) * 150, top = 260 + row * 345;
     c.save(); c.translate(cx - 48, top); drawJar(c, i, state.answers[QUESTIONS[i].id], jarRgb(i), !!state.no[QUESTIONS[i].id]); c.restore();
-    let size = 30; c.font = `600 ${size}px Oswald, 'Arial Narrow', sans-serif`;
-    while (label.some(l => c.measureText(l).width > 140) && size > 18) { size--; c.font = `600 ${size}px Oswald, 'Arial Narrow', sans-serif`; }
+    let size = 30; c.font = smallFont(600, size);
+    while (label.some(l => c.measureText(l).width > 140) && size > 18) { size--; c.font = smallFont(600, size); }
     c.fillStyle = INK; c.textAlign = "center";
     label.forEach((l, k) => c.fillText(l, cx, top + 170 + 44 + k * (size + 4)));
   });
@@ -750,6 +754,7 @@ $("surprise").onclick = () => {
 try { setEasy(JSON.parse(localStorage.getItem(STORE_PREFS) ?? "null")?.easy === true); } catch (e) { setEasy(false); }
 $("easy").addEventListener("change", e => {
   setEasy(e.target.checked);
+  update();
   try { localStorage.setItem(STORE_PREFS, JSON.stringify({ easy: e.target.checked })); } catch (err) { /* preference just won't stick */ }
 });
 $("ver").textContent = VERSION;
@@ -895,7 +900,7 @@ if (!ageConfirmed()) {
 
 $("status").textContent = storageWarning;
 render();
-const fontsReady = Promise.all(["700 104px Oswald", "600 30px Oswald", "500 30px Oswald", '66px "Permanent Marker"'].map(font => document.fonts.load(font)))
+const fontsReady = Promise.all(["700 104px Oswald", "600 30px Oswald", "500 30px Oswald", '66px "Permanent Marker"', '700 30px "Atkinson Hyperlegible"'].map(font => document.fonts.load(font)))
   .catch(() => {}).then(() => document.fonts.ready);
 fontsReady.then(update);
 </script>

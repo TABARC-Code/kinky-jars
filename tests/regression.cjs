@@ -265,3 +265,11 @@ test('the version constant matches the newest line of the history comment', () =
   const newest = head.match(/^\s+(\d+\.\d+\.\d+)\s/m)[1];
   assert.equal(boot().run('VERSION'), newest);
 });
+
+test('the poster small print switches to the easy-read face with the toggle', () => {
+  const app = boot();
+  app.elements.get('easy').listeners.change({ target: { checked: true } });
+  assert.match(app.run('smallFont(600, 30)'), /Atkinson Hyperlegible/);
+  app.elements.get('easy').listeners.change({ target: { checked: false } });
+  assert.match(app.run('smallFont(600, 30)'), /^600 30px Oswald/);
+});
