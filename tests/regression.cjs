@@ -8,6 +8,7 @@ function boot(saved = {}, options = {}) {
   const elements = new Map(), urls = [], revoked = [], frames = [];
   let draws = 0;
   const context = new Proxy({}, { get: (_, key) => {
+    if (key === 'fillText' && options.texts) return text => options.texts.push(text);
     if (key === 'measureText') return text => ({ width: String(text).length * 15 });
     if (key === 'createLinearGradient') return () => ({ addColorStop() {} });
     return () => {};
@@ -141,4 +142,11 @@ test('export does not encode until fonts are ready', async () => {
   resolveFonts();
   await saving;
   assert.equal(app.urls.length, 1);
+});
+
+test('poster footer reports how many jars are filled', () => {
+  const texts = [];
+  const app = boot({}, { texts });
+  app.run('state.answers.dom = 3; state.answers.sub = 5; drawPoster(document.createElement("canvas"), 1);');
+  assert.ok(texts.includes('2 of 28 jars filled'), texts.join(' | '));
 });

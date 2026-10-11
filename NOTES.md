@@ -37,3 +37,18 @@ Ten automated checks pass against the actual page script: invalid saved fields, 
 The harness substitutes the DOM and canvas. It doesn't prove that a PNG looks right or that a particular phone's share sheet behaves itself. A Playwright package is available in the working environment, but its browser executable isn't installed, so I haven't claimed a browser pass.
 
 Before calling the device work finished, check Android Chrome and iPhone Safari: download the PNG, share it, cancel sharing, reload saved answers and clear them. Also check Tab, Shift+Tab, Escape and focus restoration in the dialogue, plus the layout on a narrow screen. Those are outstanding checks, not results dressed up as confidence.
+
+## 11 October 2026 — small fixes and a nudge
+
+Checked it in real Chromium this time (fonts blocked, so fallback typefaces). The page scrolled sideways at 320px wide. Cause: six swatch columns with a 40px minimum each need 290px, and a 320px phone leaves about 244px inside the panel. First attempt, `auto-fill` with `minmax(40px,1fr)`, made it worse (450px), because the grid's own width is indefinite there. What worked: six columns of `minmax(0,1fr)`, and four across under 420px. Swatches are about 57px on a 320px screen, so the touch targets got bigger, not smaller. Checked at 320, 360, 390 and 1280.
+
+Also: `role="group"` on the swatches so the label is actually announced, an "Adults only (18+)" line under the intro, and a "N of 28 jars filled" footer on the poster. The footer has a test that captures the text the poster draws.
+
+Still not checked: real phones, Safari, the share sheet. Same list as before.
+
+### Ideas, not built
+
+- A "not for me" state, separate from "haven't answered". Right now 0 means both. It needs a data-model change and a migration, so not a drive-by.
+- Compare mode: load two exports side by side and highlight overlaps. Needs a way to read a poster back, so probably a small encoded payload in the PNG metadata.
+- Bundle the fonts so the page makes no external requests and the privacy line gets shorter.
+- Throttle `persist()` on slider drags. Harmless at this size; I'd want a measurement before touching it.

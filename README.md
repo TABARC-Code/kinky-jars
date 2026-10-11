@@ -1,6 +1,6 @@
 # Kinky Jars
 
-A single-page questionnaire: choose a colour, rate the jars from 1–5 and save the result as a PNG. It runs in the browser, with no build step or JavaScript packages to install.
+A single-page questionnaire for adults (18+): choose a colour, rate the jars from 1–5 and save the result as a PNG. The image footer shows how many jars you filled. It runs in the browser, with no build step or JavaScript packages to install.
 
 Names and answers are saved in this browser's local storage. The app doesn't upload them; sharing an exported image is a separate, deliberate action. Google Fonts supplies the typefaces, so opening the page does make external font requests.
 

@@ -93,7 +93,7 @@
 <div class="wrap">
   <header>
     <h1>Fill your <span>jars</span></h1>
-    <p>Pick a colour, rate each one from 1 (a little) to 5 (overflowing), then save your picture. Not your thing? Skip it and the jar stays empty.</p>
+    <p>Pick a colour, rate each one from 1 (a little) to 5 (overflowing), then save your picture. Not your thing? Skip it and the jar stays empty. Adults only (18+).</p>
   </header>
 
   <div class="layout">
@@ -598,6 +598,10 @@ function drawPoster(canvas, scale) {
   }
   c.textAlign = "center"; c.font = "500 30px Oswald, 'Arial Narrow', sans-serif"; c.fillStyle = "#555";
   c.fillText("(1 = a little  ·  5 = overflowing)", PW / 2, 200);
+
+  const filled = Object.values(state.answers).filter(Boolean).length;
+  c.fillStyle = "#555"; c.textAlign = "center"; c.font = "500 26px Oswald, 'Arial Narrow', sans-serif";
+  c.fillText(`${filled} of ${JARS.length} jars filled`, PW / 2, PH - 16);
 
   JARS.forEach((label, i) => {
     const col = i % COLS, row = Math.floor(i / COLS);
