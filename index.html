@@ -37,8 +37,9 @@
   /* colour picker */
   .picker{display:grid;gap:18px}
   @media(min-width:620px){.picker{grid-template-columns:1fr 170px;align-items:center}}
-  .swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;max-width:420px}
-  .sw{aspect-ratio:1;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px var(--line);padding:0;min-width:40px}
+  .swatches{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;max-width:420px}
+  @media(max-width:420px){.swatches{grid-template-columns:repeat(4,minmax(0,1fr))}}
+  .sw{aspect-ratio:1;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px var(--line);padding:0}
   .sw[aria-pressed=true]{box-shadow:0 0 0 3px var(--ink)}
   .sliders{display:grid;gap:12px;margin-top:16px;max-width:420px}
   .sl{display:grid;grid-template-columns:52px 1fr 44px;align-items:center;gap:10px;font-weight:700;font-size:16px}
@@ -109,7 +110,7 @@
         <h2>Pick your colour</h2>
         <div class="picker">
           <div>
-            <div class="swatches" id="swatches" aria-label="Colour choices"></div>
+            <div class="swatches" id="swatches" role="group" aria-label="Colour choices"></div>
             <div class="sliders">
               <label class="sl">Red<input type="range" id="r" min="0" max="255"><output id="rv"></output></label>
               <label class="sl">Green<input type="range" id="g" min="0" max="255"><output id="gv"></output></label>
