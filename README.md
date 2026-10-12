@@ -34,11 +34,9 @@ A jar can be empty because you skipped it or because it's a firm no. Those used 
 
 ## WordPress plugin
 
-There's a WordPress plugin in `wordpress/kink-jars/`. Every release on the [Releases page](https://github.com/TABARC-Code/kinky-jars/releases) has the zip attached: upload it under **Plugins > Add New > Upload Plugin**, activate it, and put `[kink_jars]` on a page. It shows this same app in an iframe, at the same version, and stores nothing on the site. Details are in [wordpress/kink-jars/README.md](wordpress/kink-jars/README.md).
+The WordPress plugin now has its own home: **[TABARC-Code/Wordpress-Plugin---KinkyJars](https://github.com/TABARC-Code/Wordpress-Plugin---KinkyJars)**. It bundles this app, adds a setup screen that makes the page for you (as a draft, so you can look first), and comes with a screenshot-by-screenshot install guide for people who've never uploaded a plugin. Get it from there.
 
-It's deliberately not on the WordPress.org directory. It lives here.
-
-To build the zip yourself, run `bash scripts/build-plugin.sh`; it writes `dist/kink-jars-<version>.zip`. Merging to `main` with a new `VERSION` publishes a release with the zip automatically.
+The older, bare-bones plugin in `wordpress/kink-jars/` still builds, and its zips are still attached to this repository's releases. It's just the shortcode, though, with no setup screen, so I wouldn't start with it.
 
 ## Changing the questions
 
