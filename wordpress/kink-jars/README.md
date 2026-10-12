@@ -1,4 +1,6 @@
-# Kink Jars for WordPress
+# Kink Jars for WordPress (the bare-bones one)
+
+> The maintained plugin lives at **[TABARC-Code/Wordpress-Plugin---KinkyJars](https://github.com/TABARC-Code/Wordpress-Plugin---KinkyJars)**. It has a setup screen and a proper beginner's guide. This folder is the original shortcode-only version and is kept for anyone already using it.
 
 Puts the Kink Jars questionnaire on any WordPress page or post. Drop in the shortcode and that's it:
 
